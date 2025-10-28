@@ -1,6 +1,5 @@
 import './globals.css'
 import '../styles/animation.css'
-import '../styles/index.css'
 import Navbar from '@/components/navbar'
 
 export const metadata = {
