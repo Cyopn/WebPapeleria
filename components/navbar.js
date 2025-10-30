@@ -18,7 +18,7 @@ export default function Navbar() {
             />
           </Link>
           <Link href="/" className="hover:text-yellow-300 transition">Inicio</Link>
-          <Link href="/productos" className="hover:text-yellow-300 transition">Impresiones</Link>
+          <Link href="/prints" className="hover:text-yellow-300 transition">Impresiones</Link>
           <Link href="/impresiones" className="hover:text-yellow-300 transition">Productos</Link>
           <Link href="/servicios-especiales" className="hover:text-yellow-300 transition">Servicios Especiales</Link>
           <div className="relative">

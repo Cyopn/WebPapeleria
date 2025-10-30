@@ -7,7 +7,7 @@ export default function SignInPage() {
     <section className="text-center">
       <div className="absolute top-0 w-full h-full flex justify-center items-center">
         <div className="relative top-0 w-full h-full flex justify-center items-center">
-          <div className="absolute left-0 w-[60%] h-full h-full bg-black/85 z-[2] rounded-r-[300px]">
+          <div className="absolute left-0 w-[60%] h-full bg-black/85 z-[2] rounded-r-[300px]">
           </div>
           <Image
             src="/images/bg-signin.png"
@@ -18,7 +18,7 @@ export default function SignInPage() {
             loading="eager" />
         </div>
         <div className=" flex gap-[20px] flex-col items-center justify-center absolute top-0 z-[3] w-full h-full">
-          <div className="flex flex-col bg-white w-[30%] rounded-3xl text-black inset-shadow-sm inset-shadow-gray-500 shadow-xl/20">
+          <div className="flex flex-col bg-white w-[30%] rounded-4xl text-black inset-shadow-sm inset-shadow-gray-500 shadow-xl/20">
             <h1 className="text-4xl pt-30 pb-5">Bienvenido</h1>
             <span className="fi fi-sr-user text-8xl py-8"></span>
             <form className="flex flex-col items-center justify-center w-full text-black">
@@ -40,7 +40,7 @@ export default function SignInPage() {
               </div>
               <div className="py-10">
                 <Link
-                  href="/signin"
+                  href="/"
                   className="text-black text-xl px-5 p-3 rounded-xl bg-gradient-to-r from-[#FFE417] to-[#FDBD4A]"
                 >
                   Iniciar sesión
