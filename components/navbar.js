@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { ShoppingCart, Menu, Search } from 'lucide-react'
+import Image from 'next/image'
 
 export default function Navbar() {
   return (
@@ -8,7 +9,13 @@ export default function Navbar() {
       <nav className='absolute top-0 w-full z-[9999]'>
         <div className="py-7 flex gap-0 flex-row flex-nowrap justify-evenly items-center content-center text-lg">
           <Link href="/" className="flex gap-10 items-center content-center">
-            <img src="/images/logo.png" alt="Logo" className="w-12 h-auto rounded-full"/>
+            <Image
+              src="/images/logo.png"
+              alt="Logo"
+              className="w-12 h-auto rounded-full"
+              width={300}
+              height={300}
+            />
           </Link>
           <Link href="/" className="hover:text-yellow-300 transition">Inicio</Link>
           <Link href="/productos" className="hover:text-yellow-300 transition">Impresiones</Link>
