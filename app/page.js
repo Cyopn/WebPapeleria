@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from 'next/link'
-import ProductCard from "@/components/product_card";
+import ProductCarouselWrapper from "@/components/product_carousel_wrapper";
 
 export default function HomePage() {
   return (
@@ -27,10 +27,7 @@ export default function HomePage() {
       </div>
 
       <div className="h-[60vh] flex items-center justify-evenly flex-row text-black">
-        <ProductCard />
-        <ProductCard />
-        <ProductCard />
-        <ProductCard />
+        <ProductCarouselWrapper />
       </div>
     </section>
   )

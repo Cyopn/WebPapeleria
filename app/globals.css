@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "@flaticon/flaticon-uicons/css/all/all";
+@import 'swiper/css';
+@import 'swiper/css/navigation';
+@import 'swiper/css/pagination';
 
 :root {
   --background: #ffffff;
