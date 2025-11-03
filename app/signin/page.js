@@ -17,10 +17,10 @@ export default function SignInPage() {
             height={1562}
             loading="eager" />
         </div>
-        <div className=" flex gap-[20px] flex-col items-center justify-center absolute top-0 z-[3] w-full h-full">
+        <div className=" flex pt-[100px] flex-col items-center justify-center absolute top-0 z-[3] w-full h-full">
           <div className="flex flex-col bg-white w-[30%] rounded-4xl text-black inset-shadow-sm inset-shadow-gray-500 shadow-xl/20">
-            <h1 className="text-4xl pt-30 pb-5">Bienvenido</h1>
-            <span className="fi fi-sr-user text-8xl py-8"></span>
+            <h1 className="text-4xl pt-10 pb-5">Bienvenido</h1>
+            <span className="fi fi-sr-user text-6xl py-2"></span>
             <form className="flex flex-col items-center justify-center w-full text-black">
               <div className="relative py-3 w-[45%] py-10">
                 <div className="absolute inset-y-0 start-0 flex items-center pointer-events-none">
@@ -46,7 +46,7 @@ export default function SignInPage() {
                   Iniciar sesión
                 </Link>
               </div>
-              <div className="pt-10 pb-30">
+              <div className="pt-10 pb-10">
                 <Link
                   href="/signup"
                   className="text-black text-xl px-5 py-2"

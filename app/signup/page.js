@@ -17,10 +17,10 @@ export default function SignUpPage() {
                         height={1483}
                         loading="eager" />
                 </div>
-                <div className=" flex flex-row justify-end items-center content-center absolute top-0 z-[3] w-full h-full">
+                <div className=" flex pt-[100px] flex-row justify-end items-center content-center absolute top-0 z-[3] w-full h-full">
                     <div className="flex flex-col bg-white w-[30%] rounded-4xl text-black inset-shadow-sm inset-shadow-gray-500 shadow-xl/20">
                         <h1 className="text-4xl pt-10 pb-5">Bienvenido</h1>
-                        <span className="fi fi-sr-user text-8xl py-8"></span>
+                        <span className="fi fi-sr-user text-6xl py-2"></span>
                         <form className="flex flex-col items-center justify-center w-full text-black">
                             <div className="relative w-[45%] py-5">
                                 <div className="absolute inset-y-0 start-0 flex items-center pointer-events-none">
@@ -70,7 +70,7 @@ export default function SignUpPage() {
                                 </div>
                                 <input className="block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center" placeholder="Confirmar contraseña" required />
                             </div>
-                            <div className="pt-10 pb-30">
+                            <div className="pt-5 pb-10">
                                 <Link
                                     href="/"
                                     className="text-black text-xl px-5 p-3 rounded-xl bg-gradient-to-r from-[#FFE417] to-[#FDBD4A]"

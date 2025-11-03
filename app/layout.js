@@ -15,7 +15,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <Navbar />
-        <main className="max-h-screen">{children}</main>
+        <main className="h-full">{children}</main>
       </body>
     </html>
   )
