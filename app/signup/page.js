@@ -19,7 +19,7 @@ export default function SignUpPage() {
                 </div>
                 <div className=" flex pt-[100px] flex-row justify-end items-center content-center absolute top-0 z-[3] w-full h-full">
                     <div className="flex flex-col bg-white w-[30%] rounded-4xl text-black inset-shadow-sm inset-shadow-gray-500 shadow-xl/20">
-                        <h1 className="text-4xl pt-10 pb-5">Bienvenido</h1>
+                        <h1 className="text-4xl pt-10 pb-5">Registrate</h1>
                         <span className="fi fi-sr-user text-6xl py-2"></span>
                         <form className="flex flex-col items-center justify-center w-full text-black">
                             <div className="relative w-[45%] py-5">
@@ -49,7 +49,7 @@ export default function SignUpPage() {
                             <div className="relative w-[45%] py-5">
                                 <div className="absolute inset-y-0 start-0 flex items-center pointer-events-none">
                                     <span className="items-center px-3 text-sm w-4 h-4">
-                                        <span className="fi fi-sr-user"></span>
+                                        <span className="fi fi-sr-at"></span>
                                     </span>
                                 </div>
                                 <input className="block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center" placeholder="Correo" required />
@@ -57,7 +57,7 @@ export default function SignUpPage() {
                             <div className="relative w-[45%] py-5">
                                 <div className="absolute inset-y-0 start-0 flex items-center pointer-events-none">
                                     <span className="items-center px-3 text-sm w-4 h-4">
-                                        <span className="fi fi-sr-user"></span>
+                                        <span className="fi fi-sr-lock"></span>
                                     </span>
                                 </div>
                                 <input className="block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center" placeholder="Contraseña" required />

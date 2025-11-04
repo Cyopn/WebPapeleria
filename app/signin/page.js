@@ -1,8 +1,38 @@
 'use client'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function SignInPage() {
+  const [username, setUser] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const router = useRouter()
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Login falló')
+      localStorage.setItem('user', JSON.stringify(data))
+      router.push('/')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+
   return (
     <section className="text-center">
       <div className="absolute top-0 w-full h-full flex justify-center items-center">
@@ -21,31 +51,31 @@ export default function SignInPage() {
           <div className="flex flex-col bg-white w-[30%] rounded-4xl text-black inset-shadow-sm inset-shadow-gray-500 shadow-xl/20">
             <h1 className="text-4xl pt-10 pb-5">Bienvenido</h1>
             <span className="fi fi-sr-user text-6xl py-2"></span>
-            <form className="flex flex-col items-center justify-center w-full text-black">
-              <div className="relative py-3 w-[45%] py-10">
+            <form onSubmit={handleSubmit} className="flex flex-col items-center justify-center w-full text-black">
+              <div className="relative py-3 w-[45%]">
                 <div className="absolute inset-y-0 start-0 flex items-center pointer-events-none">
                   <span className="items-center px-3 text-sm w-4 h-4">
                     <span className="fi fi-sr-user"></span>
                   </span>
                 </div>
-                <input className="block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center" placeholder="Usuario" required />
+                <input className="block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center" value={username} onChange={e => setUser(e.target.value)} placeholder="Usuario" required />
               </div>
-              <div className="relative py-3 w-[45%] py-10">
+              <div className="relative py-3 w-[45%]">
                 <div className="absolute inset-y-0 start-0 flex items-center pointer-events-none">
                   <span className="items-center px-3 text-sm w-4 h-4">
                     <span className="fi fi-sr-lock"></span>
                   </span>
                 </div>
-                <input className="block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center" placeholder="Contraseña" required />
+                <input className="block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" type="password" required />
               </div>
               <div className="py-10">
-                <Link
-                  href="/"
-                  className="text-black text-xl px-5 p-3 rounded-xl bg-gradient-to-r from-[#FFE417] to-[#FDBD4A]"
+                <button type="submit" disabled={loading}
+                  className="text-black text-xl px-5 p-3 rounded-xl bg-gradient-to-r from-[#FFE417] to-[#FDBD4A] cursor-pointer"
                 >
-                  Iniciar sesión
-                </Link>
+                  {loading ? 'Entrando...' : 'Iniciar sesión'}
+                </button>
               </div>
+              {error && <p className="text-red-600">{error}</p>}
               <div className="pt-10 pb-10">
                 <Link
                   href="/signup"
