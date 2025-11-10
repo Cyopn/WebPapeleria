@@ -22,7 +22,7 @@ export default function SignInPage() {
         body: JSON.stringify({ username, password }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data?.error || 'Login falló')
+      if (!res.ok) throw new Error(data?.error || 'Login falló');
       localStorage.setItem('user', JSON.stringify(data))
       router.push('/')
     } catch (err) {
