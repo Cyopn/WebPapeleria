@@ -12,7 +12,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  const routes = ["/prints"]
+  const routes = ["/prints", "/services", "/products"];
   const [menuOpen, setMenuOpen] = useState(false)
 
   if (routes.includes(pathname)) {
@@ -31,8 +31,8 @@ export default function Navbar() {
             </Link>
             <Link href="/" className="hover:text-yellow-300 transition">Inicio</Link>
             <Link href="/prints" className="hover:text-yellow-300 transition">Impresiones</Link>
-            <Link href="/impresiones" className="hover:text-yellow-300 transition">Productos</Link>
-            <Link href="/servicios-especiales" className="hover:text-yellow-300 transition">Servicios Especiales</Link>
+            <Link href="/products" className="hover:text-yellow-300 transition">Productos</Link>
+            <Link href="/services" className="hover:text-yellow-300 transition">Servicios Especiales</Link>
             <div className="relative">
               <div className="w-full items-center content-center">
                 <input className="p-2.5 w-full z-20 text-gray-700 rounded-xl bg-white/80" placeholder="Buscar" required />
@@ -78,8 +78,8 @@ export default function Navbar() {
           </Link>
           <Link href="/" className="hover:text-yellow-300 transition">Inicio</Link>
           <Link href="/prints" className="hover:text-yellow-300 transition">Impresiones</Link>
-          <Link href="/impresiones" className="hover:text-yellow-300 transition">Productos</Link>
-          <Link href="/servicios-especiales" className="hover:text-yellow-300 transition">Servicios Especiales</Link>
+          <Link href="/products" className="hover:text-yellow-300 transition">Productos</Link>
+          <Link href="/services" className="hover:text-yellow-300 transition">Servicios Especiales</Link>
           <div className="relative">
             <div className="w-full items-center content-center">
               <input className="p-2.5 w-full z-20 text-gray-700 rounded-xl bg-white/80" placeholder="Buscar" required />
