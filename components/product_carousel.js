@@ -1,10 +1,23 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Autoplay } from 'swiper/modules'
-import ProductCard from './product_card'
+import ProductCardIndex from './product_card_index'
 
 export default function ProductCarousel({ items }) {
+    const [itemsToShow, setItemsToShow] = useState(() => items.slice(0, 10));
+
+    useEffect(() => {
+        const shuffled = [...items];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setItemsToShow(shuffled.slice(0, 10));
+    }, [items]);
+
     return (
         <div className="w-full h-full">
             <Swiper
@@ -24,9 +37,9 @@ export default function ProductCarousel({ items }) {
                     1280: { slidesPerView: 4 },
                 }}
             >
-                {items.map(item => (
+                {itemsToShow.map(item => (
                     <SwiperSlide key={item.id}>
-                        <ProductCard
+                        <ProductCardIndex
                             name={item.name}
                             description={item.description}
                             price={item.price}

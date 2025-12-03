@@ -12,14 +12,13 @@ export default async function ProductCarouselWrapper() {
 
   const data = await res.json();
 
-  const merged = data.items.map(item => {
-    const product = data.products.find(p => p.id_product === item.id_item);
+  const merged = data.products.map(item => {
     return {
-      id: item.id_item,
-      name: item.name,
-      description: product?.description || '',
-      price: product?.price || 0,
-      image: product ? `https://noninitial-chirurgical-judah.ngrok-free.dev/api/file_manager/download/product/${product.filehash}` : '/images/no-image.png',
+      id: item.item.id_item,
+      name: item.item.name,
+      description: item.description || '',
+      price: item.price || 0,
+      image: item.file ? `https://noninitial-chirurgical-judah.ngrok-free.dev/api/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
     };
   });
 

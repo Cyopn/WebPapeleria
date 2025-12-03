@@ -8,7 +8,7 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'noninitial-chirurgical-judah.ngrok-free.dev',
         port: '',
-        pathname: '/api/file_manager/**',
+        pathname: '/api/file-manager/**',
       },
     ],
   },
