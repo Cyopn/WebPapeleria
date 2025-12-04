@@ -27,14 +27,6 @@ export default function Navbar() {
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const prev = document.body.style.overflow
-    if (cartOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = prev
-    }
-    return () => { document.body.style.overflow = prev }
   }, [cartOpen])
 
   if (routes.includes(pathname)) {

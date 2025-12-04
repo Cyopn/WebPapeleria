@@ -4,22 +4,33 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { addItem } from '@/lib/cart_store'
 import { MinusCircle, PlusCircle } from 'lucide-react'
+import { useToast } from '@/context/toast_context'
 
 export default function ProductCard({ id, name, description, price, image }) {
     const [open, setOpen] = useState(false)
 
     const [qty, setQty] = useState(1)
+    const [visible, setVisible] = useState(false)
+    const { showToast } = useToast()
     const router = useRouter()
 
     useEffect(() => {
         if (typeof window === 'undefined') return
-        const prev = document.body.style.overflow
-        if (open) {
-            document.body.style.overflow = 'hidden'
-        } else {
-            document.body.style.overflow = prev
+        if (visible) {
+            window.__modalOpenCount = (window.__modalOpenCount || 0) + 1
+            if (window.__modalOpenCount === 1) document.body.style.overflow = 'hidden'
+            return () => {
+                window.__modalOpenCount = Math.max(0, (window.__modalOpenCount || 1) - 1)
+                if (window.__modalOpenCount === 0) document.body.style.overflow = ''
+            }
         }
-        return () => { document.body.style.overflow = prev }
+    }, [visible])
+
+    useEffect(() => {
+        if (open) {
+            const t = setTimeout(() => setVisible(true), 10)
+            return () => clearTimeout(t)
+        }
     }, [open])
 
     function handleCardClick() {
@@ -27,23 +38,34 @@ export default function ProductCard({ id, name, description, price, image }) {
         setOpen(true)
     }
 
+    function closeWithAnimation(callback) {
+        setVisible(false)
+        const t = setTimeout(() => {
+            setOpen(false)
+            if (typeof callback === 'function') callback()
+        }, 200)
+        return () => clearTimeout(t)
+    }
+
     function handleClose(e) {
         e?.stopPropagation()
-        setOpen(false)
+        closeWithAnimation()
     }
 
     function handleAddToCart(e) {
         e.stopPropagation()
         const count = addItem({ id, name, price, image, qty })
+        // mostrar aviso global (success)
+        showToast(`${qty} × ${name} agregado al carrito`, { type: 'success' })
         console.log(`Agregado ${qty} × ${name}. Total en carrito:`, count)
-        setOpen(false)
+        closeWithAnimation()
     }
 
     function handleBuyNow(e) {
         e.stopPropagation()
         addItem({ id, name, price, image, qty })
-        setOpen(false)
-        router.push('/payment')
+        showToast(`${qty} × ${name} agregado al carrito`, { type: 'success' })
+        closeWithAnimation(() => router.push('/payment'))
     }
 
     return (
@@ -73,8 +95,8 @@ export default function ProductCard({ id, name, description, price, image }) {
             </div>
 
             {open && (
-                <div onClick={handleClose} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl max-w-[60vw] w-full p-6">
+                <div onClick={handleClose} className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl max-w-[60vw] w-full p-6 transform transition-all duration-200 ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
                         <div className="w-full">
                             <button onClick={handleClose} className="text-gray-600 w-full cursor-pointer text-right">Cerrar</button>
                         </div>
@@ -111,6 +133,7 @@ export default function ProductCard({ id, name, description, price, image }) {
                     </div>
                 </div>
             )}
+            {/* toast: ahora manejado por ToastProvider global */}
         </div>
     )
 }

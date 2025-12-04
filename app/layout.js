@@ -2,6 +2,7 @@ import './globals.css'
 import '../styles/animation.css'
 import Navbar from '@/components/navbar'
 import { AuthProvider } from '@/context/auth_context'
+import { ToastProvider } from '@/context/toast_context'
 
 export const metadata = {
   title: 'Papelería Online',
@@ -16,9 +17,11 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <AuthProvider>
-          <Navbar />
+          <ToastProvider>
+            <Navbar />
+            <main className="h-full">{children}</main>
+          </ToastProvider>
         </AuthProvider>
-        <main className="h-full">{children}</main>
       </body>
     </html>
   )
