@@ -27,6 +27,7 @@ export default async function ProductPapeleriaWrapper() {
             {oficinaItems.map(item => (
                 <ProductCard
                     key={item.id}
+                    id={item.id}
                     name={item.name}
                     description={item.description}
                     price={item.price}

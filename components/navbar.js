@@ -1,11 +1,13 @@
 'use client'
 import Link from 'next/link'
-import { ShoppingCart, Menu, Search } from 'lucide-react'
+import { ShoppingCart, Menu, Search, Trash2, PlusCircle, MinusCircle } from 'lucide-react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth_context'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import SlideMenu from './slide_menu'
+import CartModal from './cart_modal'
+import { subscribe, getCount, getItems, removeItem, decrementItem, addItem } from '@/lib/cart_store'
 
 export default function Navbar() {
 
@@ -14,6 +16,26 @@ export default function Navbar() {
 
   const routes = ["/prints", "/services", "/products"];
   const [menuOpen, setMenuOpen] = useState(false)
+  const [cartCount, setCartCount] = useState(() => getCount())
+  const [cartOpen, setCartOpen] = useState(false)
+
+  useEffect(() => {
+    const unsub = subscribe(() => {
+      setCartCount(getCount())
+    })
+    return unsub
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const prev = document.body.style.overflow
+    if (cartOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = prev
+    }
+    return () => { document.body.style.overflow = prev }
+  }, [cartOpen])
 
   if (routes.includes(pathname)) {
     return (
@@ -48,9 +70,14 @@ export default function Navbar() {
               Iniciar sesión
             </Link>)}
             <div className="flex gap-10 items-center content-center">
-              <button className="text-black cursor-pointer">
-                <ShoppingCart />
-              </button>
+              <div className="relative">
+                <button onClick={() => setCartOpen(true)} className="text-black cursor-pointer relative">
+                  <ShoppingCart />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">{cartCount > 9 ? '9+' : cartCount}</span>
+                  )}
+                </button>
+              </div>
               <button className="text-black cursor-pointer" onClick={() => setMenuOpen(true)}>
                 <Menu />
               </button>
@@ -58,6 +85,7 @@ export default function Navbar() {
           </div>
         </nav>
         <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+        <CartModal open={cartOpen} onClose={() => setCartOpen(false)} cartCount={cartCount} />
       </>
 
     )
@@ -95,9 +123,14 @@ export default function Navbar() {
             Iniciar sesión
           </Link>)}
           <div className="flex gap-10 items-center content-center">
-            <button className="text-black cursor-pointer">
-              <ShoppingCart />
-            </button>
+            <div className="relative">
+              <button onClick={() => setCartOpen(true)} className="text-black cursor-pointer relative">
+                <ShoppingCart />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">{cartCount > 9 ? '9+' : cartCount}</span>
+                )}
+              </button>
+            </div>
             <button className="text-black cursor-pointer" onClick={() => setMenuOpen(true)}>
               <Menu />
             </button>
@@ -105,6 +138,7 @@ export default function Navbar() {
         </div>
       </nav>
       <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <CartModal open={cartOpen} onClose={() => setCartOpen(false)} cartCount={cartCount} />
     </>
 
   )

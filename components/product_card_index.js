@@ -1,7 +1,12 @@
 'use client'
 import Image from 'next/image'
+import { addItem } from '@/lib/cart_store'
 
-export default function ProductCardIndex({ name, description, price, image }) {
+export default function ProductCardIndex({ id, name, description, price, image }) {
+    function handleAdd() {
+        addItem({ id, name, price, image })
+    }
+
     return (
         <div className="w-full h-[90%] flex justify-center items-end flex-row">
             <div className="rounded-xl shadow-xl/20  w-[65%] h-[90%] overflow-hidden transition-shadow transform transition-transform duration-300 hover:scale-102">
@@ -23,7 +28,7 @@ export default function ProductCardIndex({ name, description, price, image }) {
                         <span className="font-bold text-xl">${price}</span>
                     </div>
                     <div className="w-1/4 flex gap-0 justify-center items-center content-center">
-                        <button className="h-full w-full">
+                        <button onClick={handleAdd} className="h-full w-full">
                             <i className="fi fi-rr-shopping-cart-add text-3xl"></i>
                         </button>
                     </div>

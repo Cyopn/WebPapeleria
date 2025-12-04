@@ -40,6 +40,7 @@ export default function ProductCarousel({ items }) {
                 {itemsToShow.map(item => (
                     <SwiperSlide key={item.id}>
                         <ProductCardIndex
+                            id={item.id}
                             name={item.name}
                             description={item.description}
                             price={item.price}
