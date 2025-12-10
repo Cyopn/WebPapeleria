@@ -60,7 +60,6 @@ export default function HomePage() {
                     </div>
                 </div>
             </div>
-
             <div className="relative top-[104px] w-full p-10 flex items-center justify-evenly flex-col text-black">
                 <h1 className="text-3xl text-left w-full">Nuestros productos</h1>
                 <div id="oficina" className="p-6 w-full">
@@ -73,7 +72,6 @@ export default function HomePage() {
                         <ProductOficinaWrapper />
                     </div>
                 </div>
-
                 <div id="papeleria" className="p-6 w-full">
                     <div className="w-full">
                         <div className="rounded-full bg-[#D9D9D975] w-fit px-4 py-2">
