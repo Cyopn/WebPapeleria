@@ -1,7 +1,92 @@
 'use client'
 import Image from 'next/image'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { clear as clearCart } from '@/lib/cart_store'
+import { useToast } from '@/context/toast_context'
 
 export default function SlideMenu({ open, onClose }) {
+    const lockRef = useRef(false)
+
+    function lockBody() {
+        if (typeof window === 'undefined') return
+        if (lockRef.current) return
+        window.__modalOpenCount = (window.__modalOpenCount || 0) + 1
+        lockRef.current = true
+        if (window.__modalOpenCount === 1) document.body.style.overflow = 'hidden'
+    }
+
+    function unlockBody() {
+        if (typeof window === 'undefined') return
+        if (!lockRef.current) return
+        window.__modalOpenCount = Math.max(0, (window.__modalOpenCount || 1) - 1)
+        lockRef.current = false
+        if (window.__modalOpenCount === 0) document.body.style.overflow = ''
+    }
+
+    useEffect(() => {
+        if (open) {
+            lockBody()
+        } else {
+            unlockBody()
+        }
+        return () => {
+            if (lockRef.current) unlockBody()
+        }
+    }, [open])
+
+    const router = useRouter()
+
+    const { showToast } = useToast()
+
+    const [userData, setUserData] = useState({ name: '', email: '', phone: '', avatar: '/images/no-image.png' })
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        try {
+            const raw = localStorage.getItem('user')
+            if (!raw) return
+            const parsed = JSON.parse(raw)
+            const u = parsed?.user || parsed || {}
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setUserData({
+                name: u.names || u.nombre || '',
+                username: u.username || '',
+                email: u.email || u.correo || '',
+                phone: u.phone || u.telefono || u.phone || '',
+                avatar: u.avatar || u.photo || u.profileImageUrl || '/images/no-image.png'
+            })
+        } catch (err) {
+            console.error('Failed to parse user from localStorage', err)
+        }
+    }, [open])
+
+    function handleLogout(e) {
+        e?.stopPropagation()
+        try {
+            clearCart()
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('user')
+                localStorage.removeItem('cart_items_v1')
+            }
+        } catch (err) {
+            console.error('Logout cleanup failed', err)
+        }
+        onClose && onClose()
+        try {
+            if (typeof document !== 'undefined') {
+                document.cookie = 'user=; Max-Age=0; path=/;'
+                document.cookie = 'token=; Max-Age=0; path=/;'
+            }
+        } catch (e) {
+            console.error('Failed to clear auth cookies', e)
+        }
+        if (typeof window !== 'undefined') {
+            window.location.replace('/')
+        } else {
+            router.push('/')
+        }
+    }
     return (
         <div
             className={`fixed inset-0 z-[100] transition-all duration-300 ${open ? 'visible' : 'invisible'
@@ -14,7 +99,7 @@ export default function SlideMenu({ open, onClose }) {
             ></div>
 
             <aside
-                className={`absolute top-0 right-0 h-full w-[25%] bg-white rounded-l-4xl oveflow-hidden shadow-2xl transform transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : 'translate-x-full'
+                className={`absolute top-0 right-0 h-full w-[25%] bg-white rounded-l-4xl overflow-hidden shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${open ? 'translate-x-0' : 'translate-x-full'
                     }`}
             >
                 <div className="flex items-center justify-between pt-1.5 pb-1.5 bg-gradient-to-r from-[#8AD8F2] to-[#318BEF] rounded-tl-4xl  oveflow-hidden">
@@ -28,22 +113,22 @@ export default function SlideMenu({ open, onClose }) {
                     </button>
                 </div>
 
-                <nav className="p-4 space-y-3 w-full h-full">
-                    <div className="w-full h-full flex flex-col">
+                <nav className="p-4 space-y-3 w-full flex-1 overflow-auto">
+                    <div className="w-full h-full flex flex-col min-h-0">
                         <div className="w-full h-[25%] flex justify-center items-center py-2">
                             <Image
-                                src='/images/no-image.png'
-                                alt="w"
-                                className="h-[90%] w-auto rounded-full"
+                                src={userData.avatar || '/images/no-image.png'}
+                                alt={userData.name || 'avatar'}
+                                className="h-[80%] w-auto rounded-full"
                                 width={300}
                                 height={300}
                                 loading="eager" />
                         </div>
                         <div className="w-full flex justify-center items-center text-black py-2">
-                            <span className="text-lg">Nombre</span>
+                            <span className="text-lg">{userData.name || 'Nombre'}</span>
                         </div>
                         <div className="w-full flex justify-center items-center text-black text-center py-2">
-                            <button className="relative w-[45%] py-5 cursor-pointer">
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opcion no disponible') }} className="relative w-[45%] py-5 cursor-pointer">
                                 <div className="flex justify-center items-center">
                                     <span className="text-3xl">
                                         <span className="fi fi-rr-shopping-cart-check"></span>
@@ -51,7 +136,7 @@ export default function SlideMenu({ open, onClose }) {
                                 </div>
                                 <label className="cursor-pointer">Mis pedidos</label>
                             </button>
-                            <button className="relative w-[45%] py-5 cursor-pointer">
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opcion no disponible') }} className="relative w-[45%] py-5 cursor-pointer">
                                 <div className="flex justify-center items-center">
                                     <span className="text-3xl">
                                         <span className="fi fi-rr-cowbell"></span>
@@ -63,20 +148,20 @@ export default function SlideMenu({ open, onClose }) {
                         <div className="w-full flex flex-col justify-center items-center text-left py-2">
                             <div className="w-[85%] py-1 text-gray-500 py-3">
                                 <label>Nombre</label>
-                                <input className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" disabled />
+                                <input value={userData.name} readOnly className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" />
                             </div>
                             <div className="w-[85%] py-1 text-gray-500 py-3">
                                 <label>Correo</label>
-                                <input className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" disabled />
+                                <input value={userData.email} readOnly className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" />
                             </div>
                             <div className="w-[85%] py-1 text-gray-500 py-3">
                                 <label>Numero de telefono</label>
-                                <input className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" disabled />
+                                <input value={userData.phone} readOnly className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" />
                             </div>
                         </div>
-                        <div className="w-full flex flex-col justify-center items-center text-left py-2">
+                        <div onClick={(e) => { e.preventDefault(); showToast('Opcion no disponible') }} className="w-full flex flex-col justify-center items-center text-left py-2">
                             <div className="w-full py-3">
-                                <a className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
                                     <div className="pl-10 w-auto">
                                         <span className="text-xl px-2 h-full text-black">
                                             <span className="fi fi-br-document"></span>
@@ -93,7 +178,7 @@ export default function SlideMenu({ open, onClose }) {
                                 </a>
                             </div>
                             <div className="w-full py-3">
-                                <a className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
                                     <div className="pl-10 w-auto">
                                         <span className="text-xl px-2 h-full text-black">
                                             <span className="fi fi-br-document"></span>
@@ -110,7 +195,7 @@ export default function SlideMenu({ open, onClose }) {
                                 </a>
                             </div>
                             <div className="w-full py-3">
-                                <a className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
                                     <div className="pl-10 w-auto">
                                         <span className="text-xl px-2 h-full text-black">
                                             <span className="fi fi-br-document"></span>
@@ -125,6 +210,13 @@ export default function SlideMenu({ open, onClose }) {
                                         </span>
                                     </div>
                                 </a>
+                            </div>
+                            <div className="w-full py-3 flex items-center justify-center">
+                                <div className="text-black text-bold text-center p-3 w-full flex items-center justify-center">
+                                    <button onClick={handleLogout} className="p-3 rounded flex items-center cursor-pointer gap-3">
+                                        <span className="pl-5">Cerrar sesión</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
