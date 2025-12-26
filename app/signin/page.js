@@ -2,19 +2,22 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useToast } from '@/context/toast_context'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function SignInPage() {
   const [username, setUser] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const { showToast } = useToast()
+  function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { } }
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromParam = typeof window !== 'undefined' ? searchParams?.get('from') : null
 
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
-    setError(null)
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
@@ -24,9 +27,28 @@ export default function SignInPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Login falló');
       localStorage.setItem('user', JSON.stringify(data))
-      router.push('/')
+      try {
+        if (typeof document !== 'undefined') {
+          const cookieValue = encodeURIComponent(JSON.stringify(data?.user || data))
+          document.cookie = `user=${cookieValue}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`
+        }
+      } catch (e) {
+      }
+      let destination = '/'
+      try {
+        if (fromParam) {
+          const decoded = decodeURIComponent(fromParam)
+          if (decoded && decoded !== '/signin') destination = decoded
+        }
+      } catch (e) {
+      }
+      if (typeof window !== 'undefined') {
+        window.location.replace(destination)
+      } else {
+        router.push(destination)
+      }
     } catch (err) {
-      setError(err.message)
+      showError(err.message)
     } finally {
       setLoading(false)
     }
@@ -75,7 +97,6 @@ export default function SignInPage() {
                   {loading ? 'Entrando...' : 'Iniciar sesión'}
                 </button>
               </div>
-              {error && <p className="text-red-600">{error}</p>}
               <div className="pt-10 pb-10">
                 <Link
                   href="/signup"
