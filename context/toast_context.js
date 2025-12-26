@@ -36,7 +36,6 @@ export function ToastProvider({ children }) {
     return (
         <ToastContext.Provider value={value}>
             {children}
-            {/* Toast container */}
             <div className="fixed bottom-6 left-0 right-0 flex items-end justify-center pointer-events-none z-50">
                 <div className="w-full max-w-lg px-4">
                     {toasts.map((t) => {
