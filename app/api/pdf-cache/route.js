@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 
 const CACHE_DIR = path.join(process.cwd(), '.pdf-cache')
-const TTL_MS = 30 * 60 * 1000 // 30 minutes
+const TTL_MS = 30 * 60 * 1000
 
 function ensureCacheDir() {
     if (!fs.existsSync(CACHE_DIR)) {
@@ -16,7 +16,6 @@ function scheduleDelete(filePath, delay = TTL_MS) {
         try {
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath)
-                console.log(`[PDF Cache] Deleted expired cache: ${filePath}`)
             }
         } catch (err) {
             console.error(`[PDF Cache] Failed to delete ${filePath}:`, err.message)
@@ -34,19 +33,15 @@ export async function GET(req) {
         return NextResponse.json({ error: 'Missing hash or type query params' }, { status: 400 })
     }
 
-    // Remove .pdf extension if already present in filehash
     if (filehash.endsWith('.pdf')) {
         filehash = filehash.slice(0, -4)
     }
 
-    console.log(`[PDF Cache] Request for hash: ${filehash}, type: ${type}`)
     ensureCacheDir()
     const filename = `${filehash}.pdf`
     const filePath = path.join(CACHE_DIR, filename)
 
-    // Check if already cached and return it
     if (fs.existsSync(filePath)) {
-        console.log(`[PDF Cache] Serving from cache: ${filePath}`)
         try {
             const stat = fs.statSync(filePath)
             const stream = fs.createReadStream(filePath)
@@ -59,18 +54,14 @@ export async function GET(req) {
             return new Response(stream, { status: 200, headers })
         } catch (err) {
             console.error(`[PDF Cache] Error reading cached file:`, err.message)
-            // Continue to re-fetch if error
         }
     }
 
-    // Fetch from upstream and cache it
-    const API_BASE = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
-    // Backend stores files with .pdf extension, so append it to filehash for upstream request
+    const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
     const upstreamHash = filehash.endsWith('.pdf') ? filehash : `${filehash}.pdf`
-    const upstream = `${API_BASE}/file-manager/download/${type}/${upstreamHash}`
+    const upstream = `${API_URL}/file-manager/download/${type}/${upstreamHash}`
 
     try {
-        console.log(`[PDF Cache] Fetching from upstream: ${upstream}`)
         const res = await fetch(upstream, {
             headers: {
                 'User-Agent': 'NextPDFCache/1.0',
@@ -87,15 +78,10 @@ export async function GET(req) {
         const arrayBuffer = await res.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
-        console.log(`[PDF Cache] Buffer received: ${buffer.length} bytes`)
         const isPDF = buffer.toString('utf8', 0, 4) === '%PDF'
-        console.log(`[PDF Cache] Valid PDF header: ${isPDF}`)
 
-        // Write to cache
         fs.writeFileSync(filePath, buffer)
-        console.log(`[PDF Cache] Cached to: ${filePath}`)
 
-        // Schedule delete after TTL
         scheduleDelete(filePath)
 
         const headers = {
@@ -104,7 +90,6 @@ export async function GET(req) {
             'Content-Disposition': `inline; filename="${filename}"`,
             'Cache-Control': 'public, max-age=3600',
         }
-        console.log(`[PDF Cache] Returning cached PDF`)
         return new Response(buffer, { status: 200, headers })
     } catch (err) {
         console.error(`[PDF Cache] Error:`, err.message)
