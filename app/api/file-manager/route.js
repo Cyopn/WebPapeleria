@@ -6,7 +6,31 @@ export async function POST(request) {
         body = await request.formData()
     } catch (err) {
         const received = request.headers.get('content-type') || ''
-        return NextResponse.json({ error: 'Invalid Content-Type. Expected multipart/form-data or application/x-www-form-urlencoded.', details: String(err), received }, { status: 400 })
+        console.log('file-manager: formData parse failed', String(err), 'content-type:', received)
+        try {
+            const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+            const authHeader = request.headers.get('authorization') || null
+            const raw = await request.arrayBuffer()
+            console.log('file-manager: forwarding raw body, size bytes =', raw?.byteLength)
+            const forwardHeaders = {
+                'Accept': '*/*',
+                ...(authHeader ? { 'Authorization': authHeader } : {}),
+                ...(received ? { 'Content-Type': received } : {}),
+            }
+            const proxied = await fetch(`${API_URL}/file-manager?service=file`, {
+                method: 'POST',
+                headers: forwardHeaders,
+                body: raw,
+            })
+            const text = await proxied.text().catch(() => '')
+            let data = null
+            try { data = JSON.parse(text) } catch (e) { data = null }
+            console.log('file-manager: proxied response status', proxied.status, 'body:', text?.slice(0, 200))
+            return NextResponse.json(data || { error: 'Upstream did not return JSON', rawBodyPreview: text?.slice(0, 200) }, { status: proxied.status })
+        } catch (forwardErr) {
+            console.log('file-manager: forwarding failed', String(forwardErr))
+            return NextResponse.json({ error: 'Invalid Content-Type. Expected multipart/form-data or application/x-www-form-urlencoded.', details: String(err), received, forwardError: String(forwardErr) }, { status: 400 })
+        }
     }
     const incomingUserRaw = body.get('user')
     const incomingUsername = body.get('username')

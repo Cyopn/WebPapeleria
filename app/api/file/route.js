@@ -9,14 +9,8 @@ export async function POST(request) {
     }
 
     const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
-
-    // support two shapes:
-    // 1) { user: JSON-string, res: { originalName, service, storedName } }
-    // 2) { id_user, filename, type, filehash, token? }
-
     let user = null
     let resObj = null
-
     if (body.user) {
         try {
             user = typeof body.user === 'string' ? JSON.parse(body.user) : body.user
@@ -31,7 +25,6 @@ export async function POST(request) {
         resObj = { originalName: body.filename, service: body.type || '', storedName: body.filehash || '' }
     }
 
-    // determine id_user
     const idUser = body.id_user || (user && user.user && (user.user.id_user || user.user.id))
 
     if (!resObj) {
@@ -41,7 +34,7 @@ export async function POST(request) {
     const authHeader = request.headers.get('authorization') || (user && user.token ? `Bearer ${user.token}` : null)
 
     try {
-        const payload = { id_user: idUser || 1, filename: resObj.originalName, type: resObj.service, filehash: resObj.storedName }
+        const payload = { id_user: idUser, filename: resObj.originalName, type: resObj.service, filehash: resObj.storedName }
 
         const response = await fetch(`${API_URL}/files`, {
             method: 'POST',
