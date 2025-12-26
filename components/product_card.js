@@ -55,9 +55,7 @@ export default function ProductCard({ id, name, description, price, image }) {
     function handleAddToCart(e) {
         e.stopPropagation()
         const count = addItem({ id, name, price, image, qty })
-        // mostrar aviso global (success)
         showToast(`${qty} × ${name} agregado al carrito`, { type: 'success' })
-        console.log(`Agregado ${qty} × ${name}. Total en carrito:`, count)
         closeWithAnimation()
     }
 
@@ -133,7 +131,6 @@ export default function ProductCard({ id, name, description, price, image }) {
                     </div>
                 </div>
             )}
-            {/* toast: ahora manejado por ToastProvider global */}
         </div>
     )
 }

@@ -1,11 +1,13 @@
 import ProductCarousel from './product_carousel'
 
 export default async function ProductCarouselWrapper() {
-  const res = await fetch('https://noninitial-chirurgical-judah.ngrok-free.dev/api/products/', {
+  const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+  const BEARER_TOKEN = process.env.BEARER_TOKEN
+  const res = await fetch(`${API_URL}/products/`, {
     headers: {
       "Accept": "*/*",
       "Content-Type": "application/json; charset=utf-8",
-      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJjaGlwIiwiaWF0IjoxNzYyMTM5MTc3fQ.VDB8TeGi8nI3RG6Ie5XaI8RKrTeIJtHLeU36aoZksew",
+      "Authorization": `Bearer ${BEARER_TOKEN}`,
     },
     cache: 'no-store',
   });
@@ -18,7 +20,7 @@ export default async function ProductCarouselWrapper() {
       name: item.item.name,
       description: item.description || '',
       price: item.price || 0,
-      image: item.file ? `https://noninitial-chirurgical-judah.ngrok-free.dev/api/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
+      image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
     };
   });
 

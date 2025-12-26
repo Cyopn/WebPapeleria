@@ -14,7 +14,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  const routes = ["/prints", "/services", "/products"];
+  const routes = ["/prints", "/services", "/products", "/services/photo"];
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getCount())
   const [cartOpen, setCartOpen] = useState(false)
