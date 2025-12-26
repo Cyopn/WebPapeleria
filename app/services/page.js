@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-export default function PrintPage() {
+export default function ServicesPage() {
 
     return (
         <section className="text-center">
@@ -12,7 +12,7 @@ export default function PrintPage() {
                         <div className="absolute pt-[104px] h-[65%] top-0 w-[50%] top-0 z-[2]">
                             <div className="w-full h-full ">
                                 <div
-                                    className="w-full h-full flex flex-col justify-center items-start z-[3] text-black font-bold text-5xl opacity-100"
+                                    className="w-full h-full flex flex-col justify-center items-start z-[3] font-bold text-5xl opacity-100"
                                     style={{
                                         background: 'linear-gradient(to bottom right, rgba(0,96,234,0.4) 0%, rgba(0,54,132,0.4) 66.666%, rgba(3,239,255,0.4) 66.666%, rgba(3,239,255,0.4) 100%)'
                                     }}

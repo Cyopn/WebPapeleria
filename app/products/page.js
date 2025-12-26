@@ -5,7 +5,7 @@ import ProductPapeleriaWrapper from "@/components/product_papeleria_wrapper";
 import ProductArteWrapper from "@/components/product_arte_wrapper";
 import ProductOtroWrapper from "@/components/product_otro_wrapper";
 
-export default function HomePage() {
+export default function ProductsPage() {
     return (
         <section className="text-center">
             <div className="relative top-[104px] w-full h-[65vh] flex justify-center items-center">
