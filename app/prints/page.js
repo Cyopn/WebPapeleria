@@ -184,6 +184,7 @@ export default function PrintPage() {
             ranges: br3 ? 'all' : (rv || 'all'),
             bothSides: !!bs,
             service: uploadInfo.type || uploadInfo.service || 'file',
+            type: 'print',
             sets: Number(qty || 1),
         }
         try {
@@ -412,13 +413,12 @@ export default function PrintPage() {
                                                 <label className="w-full py-2 text-sm text-left">Precios</label>
                                                 {priceData ? (
                                                     <>
-                                                        <div className="text-sm text-left py-1">Precio por juego: <strong>{priceData.pricePerSet ?? '—'}</strong></div>
-                                                        <div className="text-sm text-left py-1">Páginas: {priceData.pages ?? '—'}</div>
-                                                        <div className="text-sm text-left py-1">Hojas: {priceData.sheets ?? '—'}</div>
-                                                        <div className="text-sm text-left py-1">Juegos: {priceData.sets ?? quantity}</div>
+                                                        <div className="text-sm text-left py-1">Tinta: <strong>{typeof priceData.breakdownPerSet?.inkCost === 'number' ? (`$ ${priceData.breakdownPerSet.inkCost}`) : '—'}</strong></div>
+                                                        <div className="text-sm text-left py-1">Papel: <strong>{typeof priceData.breakdownPerSet?.paperCost === 'number' ? (`$ ${priceData.breakdownPerSet.paperCost}`) : '—'}</strong></div>
+                                                        <div className="text-sm text-left py-1">Precio por juego: <strong>{(typeof priceData.breakdownPerSet?.inkCost === 'number' && typeof priceData.breakdownPerSet?.paperCost === 'number') ? (`$ ${priceData.breakdownPerSet.inkCost + priceData.breakdownPerSet.paperCost}`) : '—'}</strong></div>
                                                     </>
                                                 ) : (
-                                                    <div className="text-sm text-left py-2">Seleccione opciones o suba un archivo para calcular precio.</div>
+                                                    <div className="text-sm text-left py-2">Seleccione opciones y suba un archivo para calcular precio.</div>
                                                 )}
                                             </div>
                                         </div>
@@ -439,8 +439,8 @@ export default function PrintPage() {
                                             <span>Precio total</span>
                                         </div>
                                         <div className="w-full flex flex-col items-center content-stretch justify-center">
-                                            <div className="flex items-center w-full rounded-xl border border-gray-400 mb-2">
-                                                <label className="w-full py-2 text-center">{priceData ? (priceData.totalPrice ?? '—') : '0'}</label>
+                                            <div className="flex items-center w-full rounded-xl bg-[#77ADFF52] border border-[#77ADFFBD] mb-2">
+                                                <label className="w-full py-2 text-center">{priceData ? ("$ " + priceData.totalPrice ?? '—') : '$ 0'}</label>
                                             </div>
                                         </div>
                                     </div>

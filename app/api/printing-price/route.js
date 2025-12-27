@@ -49,6 +49,9 @@ export async function POST(request) {
     bothSides: typeof body.bothSides === 'boolean' ? body.bothSides : !!body.bothSides,
     service: body.service || 'file',
     sets: Number(body.sets || body.quantity || 1),
+    type: body.type || null,
+    coverType: body.coverType || null,
+    bindingType: body.bindingType || null,
   }
 
   if (!payload.filename) {
