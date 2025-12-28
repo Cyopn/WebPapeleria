@@ -50,6 +50,8 @@ export async function POST(request) {
     service: body.service || 'file',
     sets: Number(body.sets || body.quantity || 1),
     type: body.type || null,
+    ringType: body.ringType || body.ring || null,
+    documentType: body.documentType || body.docType || null,
     coverType: body.coverType || null,
     bindingType: body.bindingType || null,
   }

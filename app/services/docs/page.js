@@ -1,12 +1,13 @@
 'use client'
 import Image from 'next/image'
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { Document, Page } from 'react-pdf'
 import { useToast } from '@/context/toast_context'
+import setupPdfWorker from '@/lib/setup_pdf_worker'
 
 export default function DocsPage() {
     const [rangeValue, setRangeValue] = useState('');
-    const [br3Selected, setBr3Selected] = useState(false);
+    const [br3Selected, setBr3Selected] = useState(true);
     const [lastUpload, setLastUpload] = useState(null)
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewMounted, setPreviewMounted] = useState(false)
@@ -17,6 +18,14 @@ export default function DocsPage() {
     function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { } }
     const previewLockRef = useRef(false)
     const ANIM_DURATION = 200
+    const [quantity, setQuantity] = useState(1)
+    const [printType, setPrintType] = useState('blanco_negro')
+    const [paperSize, setPaperSize] = useState('carta')
+    const [bothSides, setBothSides] = useState(false)
+    const [docType, setDocType] = useState('te')
+    const [priceData, setPriceData] = useState(null)
+    const [priceLoading, setPriceLoading] = useState(false)
+    const [uploadLoading, setUploadLoading] = useState(false)
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -34,7 +43,12 @@ export default function DocsPage() {
         if (window.__modalOpenCount === 0) document.body.style.overflow = ''
     }
 
-
+    useEffect(() => {
+        try {
+            setupPdfWorker()
+        } catch (e) {
+        }
+    }, [])
 
     useEffect(() => {
         let tIn, tOut
@@ -58,10 +72,72 @@ export default function DocsPage() {
             }
         }
     }, [previewOpen, previewMounted])
+    const calculatePrice = useCallback(async (uploadInfo, overrides = {}) => {
+        if (!uploadInfo) return
+        const filename = uploadInfo.filehash || uploadInfo.storedName || uploadInfo.filename
+        if (!filename) return
+
+        const pt = overrides.printType ?? printType
+        const ps = overrides.paperSize ?? paperSize
+        const br3 = overrides.br3Selected ?? br3Selected
+        const rv = overrides.rangeValue ?? rangeValue
+        const bs = typeof overrides.bothSides === 'boolean' ? overrides.bothSides : bothSides
+        const qty = overrides.quantity ?? quantity
+        const dtype = overrides.docType ?? docType
+
+        const mapDoc = {
+            te: 'tesis',
+            ex: 'examen',
+            re: 'reporte',
+            ot: 'otro'
+        }
+
+        const payload = {
+            filename: filename,
+            colorModes: pt === 'color' ? 'color' : 'bw',
+            paperSizes: ps || 'carta',
+            ranges: br3 ? 'all' : (rv || 'all'),
+            bothSides: !!bs,
+            service: uploadInfo.type || uploadInfo.service || 'file',
+            sets: Number(qty || 1),
+            type: 'docs',
+            documentType: mapDoc[dtype] || 'otro',
+        }
+
+        try {
+            setPriceLoading(true)
+            let headers = { 'Content-Type': 'application/json' }
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}')
+                if (user?.token) headers.Authorization = `Bearer ${user.token}`
+            } catch (e) { }
+
+            const res = await fetch('/api/printing-price', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload),
+            })
+            const data = await res.json().catch(() => null)
+            if (!res.ok) {
+                const msg = data?.message || data?.error || `Error ${res.status}`
+                showToast(msg, { type: 'error' })
+                setPriceData(null)
+            } else {
+                setPriceData(data)
+            }
+        } catch (err) {
+            console.error('calculatePrice error', err)
+            showToast(err?.message || 'Error calculando precio', { type: 'error' })
+            setPriceData(null)
+        } finally {
+            try { setPriceLoading(false) } catch (e) { }
+        }
+    }, [printType, paperSize, br3Selected, rangeValue, bothSides, quantity, docType, showToast])
     async function handleFileChange(e) {
         e.preventDefault();
         const file = e.target.files[0]
         if (file) {
+            setUploadLoading(true)
             const user = JSON.parse(localStorage.getItem("user")) || {}
             const token = user?.token
             const fd = new FormData();
@@ -130,6 +206,7 @@ export default function DocsPage() {
             } catch (err) {
                 showError(err.message)
             }
+            setUploadLoading(false)
         }
     }
 
@@ -143,9 +220,38 @@ export default function DocsPage() {
         return `/api/pdf-cache?hash=${encodeURIComponent(hash)}&type=${encodeURIComponent(type)}`
     }, [lastUpload])
 
+    useEffect(() => {
+        if (!lastUpload) return
+        const t = setTimeout(() => calculatePrice(lastUpload), 250)
+        return () => clearTimeout(t)
+    }, [lastUpload, calculatePrice])
+
+    const fmt = (v) => {
+        try {
+            if (v === null || typeof v === 'undefined') return '—'
+            return `$ ${Number(v).toFixed(2)}`
+        } catch (e) { return '—' }
+    }
+
 
     return (
         <section className="text-center">
+            {priceLoading && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+                    <div className="bg-white p-6 rounded-lg flex flex-col items-center gap-4">
+                        <div className="animate-spin rounded-full border-4 border-t-transparent border-gray-700 w-12 h-12"></div>
+                        <div className="text-black">Calculando precio…</div>
+                    </div>
+                </div>
+            )}
+            {uploadLoading && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60">
+                    <div className="bg-white p-6 rounded-lg flex flex-col items-center gap-4">
+                        <div className="animate-spin rounded-full border-4 border-t-transparent border-gray-700 w-12 h-12"></div>
+                        <div className="text-black">Subiendo archivo…</div>
+                    </div>
+                </div>
+            )}
             <div className="absolute top-0 w-full h-full flex justify-center items-center">
                 <div className="relative top-0 w-full h-full flex flex-col justify-center items-center">
                     <div className="top-0 w-full h-[70%] z-[1]">
@@ -172,7 +278,7 @@ export default function DocsPage() {
                             <form className="flex flex-col items-center w-full bg-white rounded-xl p-6 shadow-lg inset-shadow-sm inset-shadow-gray-500">
                                 <div className="flex flex-col items-center justify-center w-full text-black">
                                     <div>
-                                        <label htmlFor="file-upload" className="text-white text-bold text-center text-lg p-2 px-5 rounded-xl bg-[#007BFF] cursor-pointer flex gap-[10px] justify-center items-center">
+                                        <label htmlFor="file-upload" className={`text-white text-bold text-center text-lg p-2 px-5 rounded-xl bg-[#007BFF] flex gap-[10px] justify-center items-center ${uploadLoading || priceLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}`}>
                                             <div className="start-0 pointer-events-none">
                                                 <span className="items-center text-2xl h-full text-black">
                                                     <span className="fi fi-br-document"></span>
@@ -195,11 +301,11 @@ export default function DocsPage() {
                                         </div>
                                         <div className="w-full flex gap-[24px] flex-col justify-between">
                                             <div className="flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2">
-                                                <input id="br1" type="radio" value="blanco_negro" name="br" className="w-5 h-5" />
+                                                <input id="br1" type="radio" value="blanco_negro" name="br" className="w-5 h-5" checked={printType === 'blanco_negro'} onChange={() => { setPrintType('blanco_negro'); if (lastUpload) calculatePrice(lastUpload, { printType: 'blanco_negro' }) }} />
                                                 <label htmlFor="br1" className="w-full py-2 text-left pl-4">Impresion Blanco y Negro</label>
                                             </div>
                                             <div className="flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2">
-                                                <input id="br2" type="radio" value="color" name="br" className="w-5 h-5" />
+                                                <input id="br2" type="radio" value="color" name="br" className="w-5 h-5" checked={printType === 'color'} onChange={() => { setPrintType('color'); if (lastUpload) calculatePrice(lastUpload, { printType: 'color' }) }} />
                                                 <label htmlFor="br2" className="w-full py-2 text-left pl-4">Impresion a Color</label>
                                             </div>
                                         </div>
@@ -216,8 +322,10 @@ export default function DocsPage() {
                                                     className="w-5 h-5"
                                                     checked={br3Selected}
                                                     onChange={() => {
-                                                        setBr3Selected(true);
+                                                        const v = true
+                                                        setBr3Selected(v);
                                                         setRangeValue('');
+                                                        if (lastUpload) calculatePrice(lastUpload, { br3Selected: v, rangeValue: '' })
                                                     }}
                                                 />
                                                 <label htmlFor="br3" className="w-full h-full  text-left pl-2">Todas</label>
@@ -229,8 +337,10 @@ export default function DocsPage() {
                                                     id="rangep"
                                                     value={rangeValue}
                                                     onChange={(e) => {
-                                                        setRangeValue(e.target.value);
+                                                        const v = e.target.value
+                                                        setRangeValue(v);
                                                         if (br3Selected) setBr3Selected(false);
+                                                        if (lastUpload) calculatePrice(lastUpload, { br3Selected: false, rangeValue: v })
                                                     }}
                                                     className="bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-1 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-300 shadow-sm focus:shadow"
                                                     placeholder="1, 3-6"
@@ -240,29 +350,30 @@ export default function DocsPage() {
                                                 <span>Tamaño de hoja</span>
                                             </div>
                                             <div className="w-full flex flex-col items-center content-stretch justify-center">
-                                                <select id="paper" name="paper" className="w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500">
-                                                    <option defaultValue={"def"} value="carta">Carta</option>
+                                                <select id="paper" name="paper" value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (lastUpload) calculatePrice(lastUpload, { paperSize: v }) }} className="w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500">
+                                                    <option value="carta">Carta</option>
                                                     <option value="oficio">Oficio</option>
                                                 </select>
                                             </div>
+                                            <div className="w-full text-left py-1">
+                                                <span>Imprimir por:</span>
+                                            </div>
+                                            <div className="w-full flex flex-col items-center content-stretch justify-center">
+                                                <select id="paper" name="paper" value={bothSides ? 'ac' : 'oc'} onChange={(e) => { const v = e.target.value === 'ac'; setBothSides(v); if (lastUpload) calculatePrice(lastUpload, { bothSides: v }) }} className="w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500">
+                                                    <option value="oc">Una cara</option>
+                                                    <option value="ac">Ambas caras</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div className="w-full text-left py-1">
-                                            <span>Imprimir por:</span>
-                                        </div>
-                                        <div className="w-full flex flex-col items-center content-stretch justify-center">
-                                            <select id="paper" name="paper" className="w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500">
-                                                <option defaultValue={"def"} value="oc">Una cara</option>
-                                                <option value="ac">Ambas caras</option>
-                                            </select>
-                                        </div>
+
                                     </div>
                                     <div className="w-full p-2">
                                         <div className="w-full text-left py-1">
                                             <span>Tipo de documento</span>
                                         </div>
                                         <div className="w-full flex flex-col items-center content-stretch justify-center">
-                                            <select id="bound" name="bound" className="w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500">
-                                                <option defaultValue={"def"} value="te">Tesis</option>
+                                            <select id="bound" name="bound" value={docType} onChange={(e) => { const v = e.target.value; setDocType(v); if (lastUpload) calculatePrice(lastUpload, { docType: v }) }} className="w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="te">Tesis</option>
                                                 <option value="ex">Examen</option>
                                                 <option value="re">Reporte</option>
                                                 <option value="ot">Otro</option>
@@ -273,36 +384,97 @@ export default function DocsPage() {
                                         </div>
                                         <div className="w-full flex flex-col items-center content-stretch justify-center">
                                             <div className="flex items-center w-full rounded-xl border border-gray-400 mb-2">
-                                                <label className="w-full py-2 text-center">0</label>
+                                                <label className="w-full py-2 text-center">{priceData ? (priceData.sheets ?? '—') : '—'}</label>
                                             </div>
                                         </div>
                                         <div className="w-full text-left">
                                             <span>Cantidad de juegos</span>
                                         </div>
-                                        <div className="w-full flex flex-col items-center content-stretch justify-center">
-                                            <div className="flex items-center w-full rounded-xl border border-gray-400 mb-2">
-                                                <label className="w-full py-2 text-center">0</label>
+                                        <div className="w-full">
+                                            <div className="relative">
+                                                <input
+                                                    id="quantity"
+                                                    name="quantity"
+                                                    type="number"
+                                                    min={1}
+                                                    value={quantity}
+                                                    onChange={(e) => {
+                                                        const v = parseInt(e.target.value || '1', 10)
+                                                        const nv = isNaN(v) ? 1 : Math.max(1, v)
+                                                        setQuantity(nv)
+                                                        if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                    }}
+                                                    className="w-full border rounded-lg block p-2.5 pl-4 pr-12 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500 no-spin"
+                                                />
+                                                <label htmlFor="quantity" className="absolute right-12 top-1/2 -translate-y-1/2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            const nv = Math.max(1, quantity - 1)
+                                                            setQuantity(nv)
+                                                            if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                        }}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer"
+                                                        aria-label="Disminuir cantidad"
+                                                    >
+                                                        −
+                                                    </button>
+                                                </label>
+                                                <label htmlFor="quantity" className="absolute right-2 top-1/2 -translate-y-1/2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            const nv = quantity + 1
+                                                            setQuantity(nv)
+                                                            if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                        }}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer"
+                                                        aria-label="Aumentar cantidad"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </label>
                                             </div>
                                         </div>
                                         <div className="w-full text-left">
-                                            <span>Precios de documentos especiales</span>
+                                            <span>Precios de documento especial</span>
                                         </div>
                                         <div className="bg-[#BABABA47] w-full rounded-lg">
                                             <div className="w-full flex flex-col content-stretch p-1 pl-3">
-                                                <span className="text-sm text-left py-2">Tesis: <label id="pd"></label></span>
-                                                <span className="text-sm text-left py-2">Examen: <label id="pd"></label></span>
-                                                <span className="text-sm text-left py-2">Reporte: <label id="pd"></label></span>
-                                                <span className="text-sm text-left py-2">Otro: <label id="pd"></label></span>
+                                                {
+                                                    priceData ? (
+                                                        <>
+                                                            <label className="w-full py-2 text-sm text-left text-[#3C3C3C] font-bold">Concepto</label>
+                                                            <div className="text-sm text-left py-1">{docType === 'te' ? 'Tesis' : docType === 'ex' ? 'Examen' : docType === 're' ? 'Reporte' : 'Otro'}: <strong>{typeof priceData?.breakdownPerSet?.docsCost === 'number' ? (`$ ${priceData.breakdownPerSet.docsCost}`) : '—'}</strong></div>
+                                                            <div className="text-sm text-left py-1">Precio por juego: <strong>{typeof priceData?.breakdownPerSet?.docsCost === 'number' ? (`$ ${priceData.breakdownPerSet.docsCost}`) : '—'}</strong></div>
+                                                            <div className="text-sm text-left py-1">Precio total documento: <strong>{typeof priceData?.breakdownTotal?.docsCost === 'number' ? (`$ ${priceData.breakdownTotal.docsCost}`) : '—'}</strong></div>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-sm text-left py-2">{docType === 'te' ? 'Tesis' : docType === 'ex' ? 'Examen' : docType === 're' ? 'Reporte' : 'Otro'}: <strong>—</strong></span>
+                                                    )
+                                                }
                                             </div>
                                         </div>
                                     </div>
                                     <div className="w-full p-2">
                                         <div className="w-full text-left">
-                                            <span>Cálculo de precios</span>
+                                            <span>Calculo de precios</span>
                                         </div>
                                         <div className="bg-[#BABABA47] w-full rounded-lg">
                                             <div className="w-full flex flex-col content-stretch p-1 pl-3">
                                                 <label className="w-full py-2 text-sm text-left text-[#3C3C3C] font-bold">Concepto</label>
+                                                {priceData ? (
+                                                    <>
+                                                        <div className="text-sm text-left py-1">Tinta: <strong>{typeof priceData.breakdownPerSet?.inkCost === 'number' ? (`$ ${priceData.breakdownPerSet.inkCost}`) : '—'}</strong></div>
+                                                        <div className="text-sm text-left py-1">Papel: <strong>{typeof priceData.breakdownPerSet?.paperCost === 'number' ? (`$ ${priceData.breakdownPerSet.paperCost}`) : '—'}</strong></div>
+                                                        <div className="text-sm text-left py-1">Precio por juego: <strong>{(typeof priceData.breakdownPerSet?.inkCost === 'number' && typeof priceData.breakdownPerSet?.paperCost === 'number') ? (`$ ${priceData.breakdownPerSet.inkCost + priceData.breakdownPerSet.paperCost}`) : '—'}</strong></div>
+                                                        <div className="text-sm text-left py-1">Precio total impresion: <strong>{(typeof priceData.breakdownTotal?.inkCost === 'number' && typeof priceData.breakdownTotal?.paperCost === 'number') ? (`$ ${priceData.breakdownTotal.inkCost + priceData.breakdownTotal.paperCost}`) : '—'}</strong></div>
+                                                    </>
+                                                ) : (
+                                                    <div className="text-sm text-left py-2">Seleccione opciones y suba un archivo para calcular precio.</div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="w-full text-left py-1">
@@ -310,18 +482,18 @@ export default function DocsPage() {
                                         </div>
                                         <div className="w-full flex flex-col items-center content-stretch justify-center">
                                             <div className="flex items-center w-full rounded-xl bg-[#77ADFF52] border border-[#77ADFFBD] mb-2">
-                                                <label className="w-full py-2 text-center">$ 0</label>
+                                                <label className="w-full py-2 text-center">{priceData ? ("$ " + (priceData.totalPrice ?? '—')) : '$ 0'}</label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="w-full gap-5 flex flex-row justify-end content-end items-end">
-                                    <button onClick={() => {
+                                    <button disabled={uploadLoading || priceLoading} onClick={() => {
                                         if (!lastUpload) return (showError('No hay archivo subido para previsualizar'), null)
                                         if (!previewFileUrl) return (showError('Faltan datos del archivo para la vista previa'), null)
                                         setPreviewOpen(true)
-                                    }} type="button" className="text-black text-sm px-10 p-1 rounded-full bg-[#FFC107] cursor-pointer">Vista Previa</button>
-                                    <button type="button" className="text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] cursor-pointer">Aceptar</button>
+                                    }} type="button" className={`text-black text-sm px-10 p-1 rounded-full bg-[#FFC107] ${uploadLoading || priceLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>Vista Previa</button>
+                                    <button disabled={uploadLoading || priceLoading} type="button" className={`text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] ${uploadLoading || priceLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>Aceptar</button>
                                 </div>
                                 <div className="margin-[-50px] bg-transparent"></div>
                             </form>
@@ -391,4 +563,4 @@ export default function DocsPage() {
             </div>
         </section>
     )
-} 
+}

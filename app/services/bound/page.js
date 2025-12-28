@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { Document, Page } from 'react-pdf'
 import { useToast } from '@/context/toast_context'
+import setupPdfWorker from '@/lib/setup_pdf_worker'
 
 export default function BoundPage() {
     const [rangeValue, setRangeValue] = useState('');
@@ -43,7 +44,12 @@ export default function BoundPage() {
         if (window.__modalOpenCount === 0) document.body.style.overflow = ''
     }
 
-
+    useEffect(() => {
+            try {
+                setupPdfWorker()
+            } catch (e) {
+            }
+        }, [])
 
     useEffect(() => {
         let tIn, tOut

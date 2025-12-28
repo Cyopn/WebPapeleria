@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import Cropper from 'react-easy-crop'
 import { useToast } from '@/context/toast_context'
+import setupPdfWorker from '@/lib/setup_pdf_worker'
 
 export default function PhotoPage() {
     const [lastUpload, setLastUpload] = useState(null)
@@ -41,6 +42,13 @@ export default function PhotoPage() {
         previewLockRef.current = false
         if (window.__modalOpenCount === 0) document.body.style.overflow = ''
     }
+
+    useEffect(() => {
+        try {
+            setupPdfWorker()
+        } catch (e) {
+        }
+    }, [])
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
