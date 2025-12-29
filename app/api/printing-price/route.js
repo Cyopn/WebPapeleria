@@ -52,6 +52,7 @@ export async function POST(request) {
     type: body.type || null,
     ringType: body.ringType || body.ring || null,
     documentType: body.documentType || body.docType || null,
+    paperType: body.paperType || body.photoPaper || null,
     coverType: body.coverType || null,
     bindingType: body.bindingType || null,
   }

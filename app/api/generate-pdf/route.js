@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { PDFDocument } from 'pdf-lib'
 import sharp from 'sharp'
+import fs from 'fs'
+import path from 'path'
 
 function cmToInches(cm) {
     return cm / 2.54
@@ -8,6 +10,10 @@ function cmToInches(cm) {
 
 export async function POST(req) {
     try {
+        const url = new URL(req.url)
+        const store = url.searchParams.get('store')
+        const requestedHash = url.searchParams.get('hash')
+
         const body = await req.json()
         const { imageBase64, paperSize = 'ti', quantity = 1 } = body
         if (!imageBase64) return NextResponse.json({ error: 'No image provided' }, { status: 400 })
@@ -112,6 +118,25 @@ export async function POST(req) {
         }
 
         const pdfBytes = await pdfDoc.save()
+        if (store) {
+            try {
+                const CACHE_DIR = path.join(process.cwd(), '.pdf-cache')
+                if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true })
+                const hash = requestedHash || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+                const filename = `${hash}.pdf`
+                const filePath = path.join(CACHE_DIR, filename)
+                fs.writeFileSync(filePath, Buffer.from(pdfBytes))
+                setTimeout(() => {
+                    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath) } catch (e) { console.error('[PDF Cache] cleanup failed', e && e.message) }
+                }, 30 * 60 * 1000)
+
+                return NextResponse.json({ ok: true, hash })
+            } catch (e) {
+                console.error('store pdf error', e)
+                return NextResponse.json({ error: 'Failed to store PDF' }, { status: 500 })
+            }
+        }
+
         return new Response(Buffer.from(pdfBytes), {
             status: 200,
             headers: {
