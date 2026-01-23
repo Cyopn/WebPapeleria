@@ -13,16 +13,15 @@ export default async function ProductCarouselWrapper() {
   });
 
   const data = await res.json();
-
-  const merged = data.products.map(item => {
-    return {
+  const merged = (data.products || [])
+    .filter(item => item?.item)
+    .map(item => ({
       id: item.item.id_item,
       name: item.item.name,
       description: item.description || '',
       price: item.price || 0,
       image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
-    };
-  });
+    }));
 
   return <ProductCarousel items={merged} />;
 }
