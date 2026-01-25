@@ -37,6 +37,12 @@ const nextConfig = {
         port: '',
         pathname: '/api/file-manager/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '4000',
+        pathname: '/api/file-manager/**',
+      }
     ],
   },
 };

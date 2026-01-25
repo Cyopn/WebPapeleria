@@ -10,7 +10,6 @@ export async function POST(request) {
 
     const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
     const authHeader = request.headers.get('authorization') || null
-    console.log('[proxy:/api/transactions] POST ->', { apiUrl: API_URL, auth: Boolean(authHeader), bodySample: body && Object.keys(body).slice(0, 6) })
 
     try {
         const response = await fetch(`${API_URL}/transactions`, {
@@ -24,10 +23,8 @@ export async function POST(request) {
         })
 
         const data = await response.json().catch(() => null)
-        console.log('[proxy:/api/transactions] upstream status:', response.status, 'responseType:', data && typeof data)
         return NextResponse.json(data, { status: response.status })
     } catch (err) {
-        console.error('[proxy:/api/transactions] error', String(err))
         return NextResponse.json({ error: 'Proxy error', details: String(err) }, { status: 500 })
     }
 }

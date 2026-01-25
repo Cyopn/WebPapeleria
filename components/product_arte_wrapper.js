@@ -11,18 +11,7 @@ export default async function ProductArteWrapper() {
         },
         cache: 'no-store',
     });
-    const data = await res.json();
-<<<<<<< HEAD
-    const merged = data.products.map(item => ({
-        id: item.id_product || item.id_item || item.id,
-        name: item.name,
-        description: item.description || '',
-        price: item.price || 0,
-        file: item.file || null,
-        image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
-    }));
-=======
-
+    const data = await res.json();0
     const merged = (data.products || [])
         .filter(item => item?.item)
         .map(item => ({
@@ -34,7 +23,6 @@ export default async function ProductArteWrapper() {
             image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
         }));
     const oficinaItems = merged.filter(mi => mi.file && mi.file.type === 'arte_y_diseno');
->>>>>>> df0024b54064e1fb3cd533b00858e566fa777c84
 
     data.items.forEach(item => {
         const mergedItem = merged.find(mi => mi.id === (item.id_item));

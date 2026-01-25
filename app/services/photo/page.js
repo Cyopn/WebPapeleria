@@ -8,6 +8,8 @@ import setupPdfWorker from '@/lib/setup_pdf_worker'
 import PaymentModal from '@/components/payment_modal'
 
 export default function PhotoPage() {
+    const [rangeValue, setRangeValue] = useState('');
+    const [bothSides, setBothSides] = useState(false)
     const [lastUpload, setLastUpload] = useState(null)
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewMounted, setPreviewMounted] = useState(false)
@@ -676,7 +678,7 @@ export default function PhotoPage() {
                                         </div>
                                         <div className="w-full flex flex-col items-center content-stretch justify-center">
                                             <div className="flex items-center w-full rounded-xl bg-[#77ADFF52] border border-[#77ADFFBD] mb-2">
-                                                <label className="w-full py-2 text-center">{priceData ? fmt(priceData.totalPrice ?? priceData.pricePerSet) : '$ 0'}</label>
+                                                <label className="w-full py-2 text-center">{priceData ? ("$ " + (priceData.totalPrice ?? '—')) : '$ 0'}</label>
                                             </div>
                                         </div>
                                     </div>
@@ -790,7 +792,7 @@ export default function PhotoPage() {
                                 onClose={() => setPaymentOpen(false)}
                                 amount={priceData?.totalPrice ?? 0}
                                 currency={'MXN'}
-                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData }}
+                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity:1, priceData }}
                                 onPay={(res) => handlePayResult(res)}
                             />
                         </div>

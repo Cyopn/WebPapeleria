@@ -74,11 +74,10 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
 
                         const filename = lastUpload?.filename || lastUpload?.filehash || null
                         const idFileValue = lastUpload?.id_file ?? lastUpload?.id ?? lastUpload?.fileId ?? null
-                        const pricePerSet = (priceData?.breakdownPerSet && typeof priceData.breakdownPerSet.inkCost === 'number' && typeof priceData.breakdownPerSet.paperCost === 'number') ? (priceData.breakdownPerSet.inkCost + priceData.breakdownPerSet.paperCost) : (amount || 0)
                         const prodPayload = {
                             type: 'print',
                             description: filename || 'Impresión',
-                            price: Number(pricePerSet || amount || 0),
+                            price: Number(priceData?.totalPrice || 0),
                             id_file: idFileValue,
                             filename: filename || lastUpload?.filehash || null,
                             amount: Number(quantity || 1),
@@ -105,7 +104,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             status: 'pending',
                             payament_method: 'cash',
                             details: [
-                                { id_product: prodId, amount: Number(quantity || 1), price: Number(pricePerSet || amount || 0) }
+                                { id_product: prodId, amount: Number(quantity), price: Number(priceData?.pricePerSet || 0) }
                             ]
                         }
                         const trxRes = await req('/transactions', 'POST', trxPayload)
