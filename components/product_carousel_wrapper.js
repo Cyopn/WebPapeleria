@@ -12,6 +12,7 @@ export default async function ProductCarouselWrapper() {
     cache: 'no-store',
   });
   const data = await res.json();
+<<<<<<< HEAD
   const merged = data.products.map(item => {
     if(item.type === 'item') 
     return {
@@ -22,5 +23,17 @@ export default async function ProductCarouselWrapper() {
       image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
     };
   });
+=======
+  const merged = (data.products || [])
+    .filter(item => item?.item)
+    .map(item => ({
+      id: item.item.id_item,
+      name: item.item.name,
+      description: item.description || '',
+      price: item.price || 0,
+      image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
+    }));
+
+>>>>>>> df0024b54064e1fb3cd533b00858e566fa777c84
   return <ProductCarousel items={merged} />;
 }

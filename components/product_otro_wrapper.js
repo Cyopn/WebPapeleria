@@ -12,6 +12,7 @@ export default async function ProductOtroWrapper() {
         cache: 'no-store',
     });
     const data = await res.json();
+<<<<<<< HEAD
     const merged = data.products.map(item => ({
         id: item.id_product || item.id_item || item.id,
         name: item.name,
@@ -29,6 +30,20 @@ export default async function ProductOtroWrapper() {
     })
     
     const finalItems = merged.filter(mi => mi.file && mi.file.type === 'otros');
+=======
+
+    const merged = (data.products || [])
+        .filter(item => item?.item)
+        .map(item => ({
+            id: item.item.id_item,
+            name: item.item.name,
+            description: item.description || '',
+            price: item.price || 0,
+            file: item.file || null,
+            image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
+        }));
+    const oficinaItems = merged.filter(mi => mi.file && mi.file.type === 'otros');
+>>>>>>> df0024b54064e1fb3cd533b00858e566fa777c84
 
     return (
         <div className="grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full">
