@@ -8,7 +8,6 @@ import { useToast } from '@/context/toast_context'
 
 export default function ProductCard({ id, name, description, price, image }) {
     const [open, setOpen] = useState(false)
-
     const [qty, setQty] = useState(1)
     const [visible, setVisible] = useState(false)
     const { showToast } = useToast()
@@ -91,7 +90,6 @@ export default function ProductCard({ id, name, description, price, image }) {
                     </div>
                 </div>
             </div>
-
             {open && (
                 <div onClick={handleClose} className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}>
                     <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl max-w-[60vw] w-full p-6 transform transition-all duration-200 ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>

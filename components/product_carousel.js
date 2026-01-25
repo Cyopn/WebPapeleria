@@ -17,7 +17,6 @@ export default function ProductCarousel({ items }) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setItemsToShow(shuffled.slice(0, 10));
     }, [items]);
-
     return (
         <div className="w-full h-full">
             <Swiper
@@ -37,17 +36,20 @@ export default function ProductCarousel({ items }) {
                     1280: { slidesPerView: 4 },
                 }}
             >
-                {itemsToShow.map(item => (
-                    <SwiperSlide key={item.id}>
-                        <ProductCardIndex
-                            id={item.id}
-                            name={item.name}
-                            description={item.description}
-                            price={item.price}
-                            image={item.image}
-                        />
-                    </SwiperSlide>
-                ))}
+                {itemsToShow.map(item => {
+                    if (item?.id === undefined) return null;
+                    return (
+                        <SwiperSlide key={item.id}>
+                            <ProductCardIndex
+                                id={item.id}
+                                name={item.name}
+                                description={item.description}
+                                price={item.price}
+                                image={item.image}
+                            />
+                        </SwiperSlide>
+                    )
+                })}
             </Swiper>
         </div>
     )

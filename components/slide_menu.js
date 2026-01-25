@@ -36,9 +36,7 @@ export default function SlideMenu({ open, onClose }) {
     }, [open])
 
     const router = useRouter()
-
     const { showToast } = useToast()
-
     const [userData, setUserData] = useState({ name: '', email: '', phone: '', avatar: '/images/no-image.png' })
 
     useEffect(() => {
@@ -112,7 +110,6 @@ export default function SlideMenu({ open, onClose }) {
                         </span>
                     </button>
                 </div>
-
                 <nav className="p-4 space-y-3 w-full flex-1 overflow-auto">
                     <div className="w-full h-full flex flex-col min-h-0">
                         <div className="w-full h-[25%] flex justify-center items-center py-2">

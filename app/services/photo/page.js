@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf'
 import Cropper from 'react-easy-crop'
 import { useToast } from '@/context/toast_context'
 import setupPdfWorker from '@/lib/setup_pdf_worker'
+import PaymentModal from '@/components/payment_modal'
 
 export default function PhotoPage() {
     const [lastUpload, setLastUpload] = useState(null)
@@ -24,6 +25,7 @@ export default function PhotoPage() {
     const [priceLoading, setPriceLoading] = useState(false)
     const [uploadLoading, setUploadLoading] = useState(false)
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState(null)
+    const [paymentOpen, setPaymentOpen] = useState(false)
     const [numPages, setNumPages] = useState(null)
     const [pageNumber, setPageNumber] = useState(1)
     const { showToast } = useToast();
@@ -439,6 +441,18 @@ export default function PhotoPage() {
         return () => clearTimeout(t)
     }, [lastUpload, calculatePrice])
 
+    function handlePayResult(result) {
+        try {
+            setPaymentOpen(false)
+            console.log('[PhotoPage] payment result', result)
+            const m = result?.method || 'unknown'
+            const a = result?.amount ?? (priceData?.totalPrice ?? 0)
+            showToast(`Pago recibido: ${m} — $ ${a}`, { type: 'success' })
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
     return (
         <section className="text-center">
             <style jsx>{`
@@ -669,7 +683,16 @@ export default function PhotoPage() {
                                 </div>
                                 <div className="w-full gap-5 flex flex-row justify-end content-end items-end">
                                     <button onClick={() => { handleGeneratePdf() }} type="button" className="text-black text-sm px-10 p-1 rounded-full bg-[#FFC107] cursor-pointer">Vista Previa</button>
-                                    <button type="button" className="text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] cursor-pointer">Aceptar</button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (priceLoading) return
+                                            if (!priceData) return (showError('Calcula el precio primero'), null)
+                                            console.log('[PhotoPage] opening payment modal, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
+                                            setPaymentOpen(true)
+                                        }}
+                                        className="text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] cursor-pointer"
+                                    >Aceptar</button>
                                 </div>
                                 <div className="margin-[-50px] bg-transparent"></div>
                             </form>
@@ -762,6 +785,14 @@ export default function PhotoPage() {
                                 </div>
                             )}
                             <div className="py-4"></div>
+                            <PaymentModal
+                                open={paymentOpen}
+                                onClose={() => setPaymentOpen(false)}
+                                amount={priceData?.totalPrice ?? 0}
+                                currency={'MXN'}
+                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData }}
+                                onPay={(res) => handlePayResult(res)}
+                            />
                         </div>
                     </div>
                 </div>

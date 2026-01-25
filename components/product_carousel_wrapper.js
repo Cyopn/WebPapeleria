@@ -11,18 +11,16 @@ export default async function ProductCarouselWrapper() {
     },
     cache: 'no-store',
   });
-
   const data = await res.json();
-
   const merged = data.products.map(item => {
+    if(item.type === 'item') 
     return {
-      id: item.item.id_item,
-      name: item.item.name,
+      id: item.id_product || item.id_item || item.id,
+      name: item.name,
       description: item.description || '',
       price: item.price || 0,
       image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
     };
   });
-
   return <ProductCarousel items={merged} />;
 }

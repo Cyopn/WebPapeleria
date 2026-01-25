@@ -9,7 +9,6 @@ export default function CartModal({ open, onClose, cartCount }) {
     const [mounted, setMounted] = useState(Boolean(open))
     const [visible, setVisible] = useState(Boolean(open))
     const ANIM_DURATION = 200
-
     const lockRef = useRef(false)
 
     function lockBody() {
@@ -42,7 +41,6 @@ export default function CartModal({ open, onClose, cartCount }) {
                 unlockBody()
             }, ANIM_DURATION)
         }
-
         return () => {
             clearTimeout(tIn)
             clearTimeout(tOut)
@@ -53,7 +51,7 @@ export default function CartModal({ open, onClose, cartCount }) {
     }, [open, mounted])
 
     if (!mounted) return null
-
+    
     const items = getItems()
 
     return (

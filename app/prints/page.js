@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { Document, Page } from 'react-pdf'
 import setupPdfWorker from '@/lib/setup_pdf_worker'
 import { useToast } from '@/context/toast_context'
+import PaymentModal from '@/components/payment_modal'
 
 export default function PrintPage() {
     const [rangeValue, setRangeValue] = useState('');
@@ -24,6 +25,7 @@ export default function PrintPage() {
     const [priceData, setPriceData] = useState(null)
     const [priceLoading, setPriceLoading] = useState(false)
     const [uploadLoading, setUploadLoading] = useState(false)
+    const [paymentOpen, setPaymentOpen] = useState(false)
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -224,6 +226,18 @@ export default function PrintPage() {
         const t = setTimeout(() => calculatePrice(lastUpload), 250)
         return () => clearTimeout(t)
     }, [lastUpload, calculatePrice])
+
+    function handlePayResult(result) {
+        try {
+            setPaymentOpen(false)
+            const m = result?.method || 'unknown'
+            const a = result?.amount ?? (priceData?.totalPrice ?? 0)
+            console.log('[PrintPage] payment result', result)
+            showToast(`Pago recibido: ${m} — $ ${a}`, { type: 'success' })
+        } catch (e) {
+            console.error(e)
+        }
+    }
 
 
     return (
@@ -451,7 +465,17 @@ export default function PrintPage() {
                                         if (!previewFileUrl) { try { showToast('Faltan datos del archivo para la vista previa', { type: 'error' }) } catch (e) { }; return }
                                         setPreviewOpen(true)
                                     }} type="button" className="text-black text-sm px-10 p-1 rounded-full bg-[#FFC107] cursor-pointer">Vista Previa</button>
-                                    <button type="button" disabled={priceLoading} className={`text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] ${priceLoading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>Aceptar</button>
+                                    <button
+                                        type="button"
+                                        disabled={priceLoading}
+                                        onClick={() => {
+                                            if (priceLoading) return
+                                            if (!priceData) { try { showToast('Carga el archivo primero', { type: 'warn' }) } catch (e) { }; return }
+                                            console.log('[PrintPage] opening payment modal, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
+                                            setPaymentOpen(true)
+                                        }}
+                                        className={`text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] ${priceLoading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    >Aceptar</button>
                                 </div>
                                 <div className="margin-[-50px] bg-transparent"></div>
                             </form>
@@ -516,6 +540,14 @@ export default function PrintPage() {
                                     </div>
                                 </div>
                             )}
+                            <PaymentModal
+                                open={paymentOpen}
+                                onClose={() => setPaymentOpen(false)}
+                                amount={priceData?.totalPrice ?? 0}
+                                currency={'MXN'}
+                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData }}
+                                onPay={(res) => handlePayResult(res)}
+                            />
                             <div className="py-4"></div>
                         </div>
                     </div>

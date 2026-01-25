@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { Document, Page } from 'react-pdf'
 import { useToast } from '@/context/toast_context'
 import setupPdfWorker from '@/lib/setup_pdf_worker'
+import PaymentModal from '@/components/payment_modal'
 
 export default function DocsPage() {
     const [rangeValue, setRangeValue] = useState('');
@@ -26,6 +27,7 @@ export default function DocsPage() {
     const [priceData, setPriceData] = useState(null)
     const [priceLoading, setPriceLoading] = useState(false)
     const [uploadLoading, setUploadLoading] = useState(false)
+    const [paymentOpen, setPaymentOpen] = useState(false)
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -225,6 +227,18 @@ export default function DocsPage() {
         const t = setTimeout(() => calculatePrice(lastUpload), 250)
         return () => clearTimeout(t)
     }, [lastUpload, calculatePrice])
+
+    function handlePayResult(result) {
+        try {
+            setPaymentOpen(false)
+            console.log('[DocsPage] payment result', result)
+            const m = result?.method || 'unknown'
+            const a = result?.amount ?? (priceData?.totalPrice ?? 0)
+            showToast(`Pago recibido: ${m} — $ ${a}`, { type: 'success' })
+        } catch (e) {
+            console.error(e)
+        }
+    }
 
     const fmt = (v) => {
         try {
@@ -493,10 +507,28 @@ export default function DocsPage() {
                                         if (!previewFileUrl) return (showError('Faltan datos del archivo para la vista previa'), null)
                                         setPreviewOpen(true)
                                     }} type="button" className={`text-black text-sm px-10 p-1 rounded-full bg-[#FFC107] ${uploadLoading || priceLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>Vista Previa</button>
-                                    <button disabled={uploadLoading || priceLoading} type="button" className={`text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] ${uploadLoading || priceLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>Aceptar</button>
+                                    <button
+                                        disabled={uploadLoading || priceLoading}
+                                        type="button"
+                                        onClick={() => {
+                                            if (uploadLoading || priceLoading) return
+                                            if (!priceData) return (showError('Calcula el precio primero'), null)
+                                            console.log('[DocsPage] opening payment modal, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
+                                            setPaymentOpen(true)
+                                        }}
+                                        className={`text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] ${uploadLoading || priceLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    >Aceptar</button>
                                 </div>
                                 <div className="margin-[-50px] bg-transparent"></div>
                             </form>
+                            <PaymentModal
+                                open={paymentOpen}
+                                onClose={() => setPaymentOpen(false)}
+                                amount={priceData?.totalPrice ?? 0}
+                                currency={'MXN'}
+                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData }}
+                                onPay={(res) => handlePayResult(res)}
+                            />
                             {previewMounted && (
                                 <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
                                     <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl max-w-[60vw] w-full p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`} style={{ maxHeight: '80vh' }}>

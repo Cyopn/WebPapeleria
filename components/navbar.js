@@ -7,13 +7,11 @@ import { useAuth } from '@/context/auth_context'
 import { useState, useEffect } from 'react'
 import SlideMenu from './slide_menu'
 import CartModal from './cart_modal'
-import { subscribe, getCount, getItems, removeItem, decrementItem, addItem } from '@/lib/cart_store'
+import { subscribe, getCount} from '@/lib/cart_store'
 
 export default function Navbar() {
-
   const pathname = usePathname();
   const { user } = useAuth();
-
   const routes = ["/prints", "/services", "/products", "/services/photo"];
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getCount())

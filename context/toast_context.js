@@ -5,17 +5,17 @@ const ToastContext = createContext(null)
 
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([])
-
     const ANIM_DURATION = 300
-
     const showToast = useCallback((message, opts = {}) => {
         const id = Date.now() + Math.random()
         const duration = typeof opts.duration === 'number' ? opts.duration : 1300
         const type = opts.type || 'info'
         const toast = { id, message, type, visible: false }
+
         setToasts((t) => [...t, toast])
 
         const enterDelay = 20
+
         setTimeout(() => {
             setToasts((t) => t.map((x) => (x.id === id ? { ...x, visible: true } : x)))
         }, enterDelay)
@@ -27,12 +27,10 @@ export function ToastProvider({ children }) {
         setTimeout(() => {
             setToasts((t) => t.filter((x) => x.id !== id))
         }, duration + ANIM_DURATION + enterDelay)
-
         return id
     }, [])
 
     const value = { showToast }
-
     return (
         <ToastContext.Provider value={value}>
             {children}

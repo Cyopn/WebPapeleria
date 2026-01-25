@@ -11,22 +11,28 @@ export default async function ProductOtroWrapper() {
         },
         cache: 'no-store',
     });
-
     const data = await res.json();
-
     const merged = data.products.map(item => ({
-        id: item.item.id_item,
-        name: item.item.name,
+        id: item.id_product || item.id_item || item.id,
+        name: item.name,
         description: item.description || '',
         price: item.price || 0,
         file: item.file || null,
         image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
     }));
-    const oficinaItems = merged.filter(mi => mi.file && mi.file.type === 'otros');
+
+    data.items.forEach(item => {
+        const mergedItem = merged.find(mi => mi.id === (item.id_item));
+        if (mergedItem) {
+            mergedItem.name = item.name;
+        }
+    })
+    
+    const finalItems = merged.filter(mi => mi.file && mi.file.type === 'otros');
 
     return (
         <div className="grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full">
-            {oficinaItems.map(item => (
+            {finalItems.map(item => (
                 <ProductCard
                     key={item.id}
                     id={item.id}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { Document, Page } from 'react-pdf'
 import { useToast } from '@/context/toast_context'
 import setupPdfWorker from '@/lib/setup_pdf_worker'
+import PaymentModal from '@/components/payment_modal'
 
 export default function BoundPage() {
     const [rangeValue, setRangeValue] = useState('');
@@ -27,6 +28,7 @@ export default function BoundPage() {
     const [priceData, setPriceData] = useState(null)
     const [priceLoading, setPriceLoading] = useState(false)
     const [uploadLoading, setUploadLoading] = useState(false)
+    const [paymentOpen, setPaymentOpen] = useState(false)
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -45,11 +47,11 @@ export default function BoundPage() {
     }
 
     useEffect(() => {
-            try {
-                setupPdfWorker()
-            } catch (e) {
-            }
-        }, [])
+        try {
+            setupPdfWorker()
+        } catch (e) {
+        }
+    }, [])
 
     useEffect(() => {
         let tIn, tOut
@@ -224,6 +226,18 @@ export default function BoundPage() {
         const t = setTimeout(() => calculatePrice(lastUpload), 250)
         return () => clearTimeout(t)
     }, [lastUpload, calculatePrice])
+
+    function handlePayResult(result) {
+        try {
+            setPaymentOpen(false)
+            console.log('[BoundPage] payment result', result)
+            const m = result?.method || 'unknown'
+            const a = result?.amount ?? (priceData?.totalPrice ?? 0)
+            showToast(`Pago recibido: ${m} — $ ${a}`, { type: 'success' })
+        } catch (e) {
+            console.error(e)
+        }
+    }
 
 
     return (
@@ -523,7 +537,16 @@ export default function BoundPage() {
                                         if (!previewFileUrl) return (showError('Faltan datos del archivo para la vista previa'), null)
                                         setPreviewOpen(true)
                                     }} type="button" className="text-black text-sm px-10 p-1 rounded-full bg-[#FFC107] cursor-pointer">Vista Previa</button>
-                                    <button type="button" className="text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] cursor-pointer">Aceptar</button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (priceLoading) return
+                                            if (!priceData) { try { showToast('Carga el archivo primero', { type: 'warn' }) } catch (e) { }; return }
+                                            console.log('[BoundPage] opening payment modal, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
+                                            setPaymentOpen(true)
+                                        }}
+                                        className="text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] cursor-pointer"
+                                    >Aceptar</button>
                                 </div>
                                 <div className="margin-[-50px] bg-transparent"></div>
                             </form>
@@ -587,6 +610,14 @@ export default function BoundPage() {
                                 </div>
                             )}
                             <div className="py-4"></div>
+                            <PaymentModal
+                                open={paymentOpen}
+                                onClose={() => setPaymentOpen(false)}
+                                amount={priceData?.totalPrice ?? 0}
+                                currency={'MXN'}
+                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData }}
+                                onPay={(res) => handlePayResult(res)}
+                            />
                         </div>
                     </div>
                 </div>

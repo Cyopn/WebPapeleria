@@ -23,7 +23,6 @@ export function AuthProvider({ children }) {
     if (!ready) {
         return null
     }
-
     return (
         <AuthContext.Provider value={{ user, setUser }}>
             {children}
