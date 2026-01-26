@@ -28,7 +28,7 @@ export default function ProductCardIndex({ id, name, description, price, image }
                         <span className="font-bold text-xl">${price}</span>
                     </div>
                     <div className="w-1/4 flex gap-0 justify-center items-center content-center">
-                        <button onClick={handleAdd} className="h-full w-full">
+                        <button onClick={handleAdd} className="h-full w-full cursor-pointer">
                             <i className="fi fi-rr-shopping-cart-add text-3xl"></i>
                         </button>
                     </div>

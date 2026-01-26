@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useToast } from '@/context/toast_context'
+import { getItems, subscribe, clear } from '@/lib/cart_store'
 
 export default function PaymentModal({ open, onClose, amount = 0, currency = 'MXN', onPay, context = {} }) {
     const [mounted, setMounted] = useState(Boolean(open))
@@ -8,10 +9,13 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
     const [method, setMethod] = useState('cash')
     const [loading, setLoading] = useState(false)
     const [card, setCard] = useState({ name: '', number: '', exp: '', cvc: '' })
+    const [currentCartItems, setCurrentCartItems] = useState(() => getItems())
     const ANIM_DURATION = 200
     const lockRef = useRef(false)
     const { showToast } = useToast()
-    const { lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData } = context || {}
+    const { lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData, cartItems, total, item } = context || {}
+    const effectiveCartItems = currentCartItems.length > 0 ? currentCartItems : (item ? [item] : [])
+    const displayAmount = effectiveCartItems.length > 0 ? effectiveCartItems.reduce((s, it) => s + (Number(it.price) || 0) * (it.qty || 1), 0) : (context.total || amount)
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -28,6 +32,13 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
         lockRef.current = false
         if (window.__modalOpenCount === 0) document.body.style.overflow = ''
     }
+
+    useEffect(() => {
+        const unsub = subscribe(() => {
+            setCurrentCartItems(getItems())
+        })
+        return unsub
+    }, [])
 
     useEffect(() => {
         let tIn, tOut
@@ -72,32 +83,17 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         return data
                     }
 
-                    const cartItems = (context && Array.isArray(context.cartItems)) ? context.cartItems : []
+                    const cartItems = effectiveCartItems
 
                     let details = []
 
-                    if (cartItems.length > 0) {
-                        for (const it of cartItems) {
-                            const prodPayload = {
-                                type: 'product',
-                                description: it.name || it.title || 'Artículo',
-                                price: Number(it.price || 0),
-                                amount: Number(it.qty || 1),
-                                observations: '',
-                                status: 'pending'
-                            }
-                            const prodRes = await req('/products', 'POST', prodPayload)
-                            const prodId = prodRes?.id_item ?? prodRes?.id_product ?? prodRes?.id ?? null
-                            if (!prodId) throw new Error('No se obtuvo id de producto para ' + (it.name || it.id || 'item'))
-                            details.push({ id_product: prodId, amount: Number(it.qty || 1), price: Number(it.price || 0) })
-                        }
-                    } else {
+                    if (lastUpload || printType || priceData) {
                         const filename = lastUpload?.filename || lastUpload?.filehash || null
                         const idFileValue = lastUpload?.id_file ?? lastUpload?.id ?? lastUpload?.fileId ?? null
                         const prodPayload = {
                             type: 'print',
                             description: filename || 'Impresión',
-                            price: Number(priceData?.totalPrice || 0),
+                            price: Number(priceData?.totalPrice || amount || 0),
                             id_file: idFileValue,
                             filename: filename || lastUpload?.filehash || null,
                             amount: Number(quantity || 1),
@@ -112,8 +108,14 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         }
                         const prodRes = await req('/products', 'POST', prodPayload)
                         const prodId = prodRes?.id_item ?? prodRes?.id_product ?? prodRes?.id ?? null
-                        if (!prodId) throw new Error('No se obtuvo id de producto')
-                        details.push({ id_product: prodId, amount: Number(quantity || 1), price: Number(priceData?.pricePerSet || 0) })
+                        if (!prodId) throw new Error('No se obtuvo id de producto para impresión')
+                        details.push({ id_product: prodId, amount: Number(quantity || 1), price: Number(priceData?.pricePerSet || amount || 0) })
+                    } else if (cartItems.length > 0) {
+                        for (const it of cartItems) {
+                            details.push({ id_product: it.id, amount: Number(it.qty || 1), price: Number(it.price || 0) })
+                        }
+                    } else {
+                        throw new Error('No hay items para procesar el pago')
                     }
 
                     const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null
@@ -123,7 +125,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         date: new Date().toISOString(),
                         id_user: userId,
                         status: 'pending',
-                        payament_method: 'cash',
+                        payment_method: 'cash',
                         details
                     }
                     const trxRes = await req('/transactions', 'POST', trxPayload)
@@ -136,6 +138,9 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                     showToast('Pago en efectivo registrado correctamente', { type: 'success' })
                     onPay && onPay({ method: 'cash', amount, transactionId: trxId })
                     onClose && onClose()
+                    if (currentCartItems.length > 0) {
+                        clear()
+                    }
                     setTimeout(() => { try { window.location.reload() } catch (e) { /* ignore */ } }, 3000)
                 } catch (err) {
                     setLoading(false)
@@ -179,7 +184,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                 <div className="w-full bg-[#A8D860AB] rounded-t-xl px-6">
                     <h3 className="text-xl font-semibold text-black py-2">Gestion de pago</h3>
                 </div>
-                <p className="mt-2 text-sm text-gray-600">Total: <span className="font-medium">{currency} {amount}</span></p>
+                <p className="mt-2 text-sm text-gray-600">Total: <span className="font-medium">{currency} {displayAmount}</span></p>
                 <div className="w-[80%] mt-4 text-black">
                     <div className="flex gap-2 flex justify-between py-2">
                         <button
@@ -190,10 +195,6 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             onClick={() => setMethod('paypal')}
                             className={`flex-1 py-2 rounded-md cursor-pointer ${method === 'paypal' ? 'bg-gray-100 border border-gray-300' : 'bg-white border'} text-sm`}
                         >PayPal</button>
-                        <button
-                            onClick={() => setMethod('card')}
-                            className={`flex-1 py-2 rounded-md cursor-pointer ${method === 'card' ? 'bg-gray-100 border border-gray-300' : 'bg-white border'} text-sm`}
-                        >Tarjeta</button>
                     </div>
                     {method === 'cash' && (
                         <div className="text-sm text-gray-700">
@@ -203,36 +204,6 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                     {method === 'paypal' && (
                         <div className="text-sm text-gray-700">
                             <p>Se te redirigirá a PayPal para completar el pago.</p>
-                        </div>
-                    )}
-                    {method === 'card' && (
-                        <div className="space-y-2">
-                            <input
-                                value={card.name}
-                                onChange={(e) => setCard((c) => ({ ...c, name: e.target.value }))}
-                                placeholder="Nombre en la tarjeta"
-                                className="w-full px-3 py-2 border rounded-md text-sm"
-                            />
-                            <input
-                                value={card.number}
-                                onChange={(e) => setCard((c) => ({ ...c, number: e.target.value }))}
-                                placeholder="Número de tarjeta"
-                                className="w-full px-3 py-2 border rounded-md text-sm"
-                            />
-                            <div className="flex gap-2">
-                                <input
-                                    value={card.exp}
-                                    onChange={(e) => setCard((c) => ({ ...c, exp: e.target.value }))}
-                                    placeholder="MM/AA"
-                                    className="flex-1 px-3 py-2 border rounded-md text-sm"
-                                />
-                                <input
-                                    value={card.cvc}
-                                    onChange={(e) => setCard((c) => ({ ...c, cvc: e.target.value }))}
-                                    placeholder="CVC"
-                                    className="w-24 px-3 py-2 border rounded-md text-sm"
-                                />
-                            </div>
                         </div>
                     )}
                     <div className="mt-4">

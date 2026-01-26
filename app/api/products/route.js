@@ -22,8 +22,11 @@ export async function POST(request) {
             body: JSON.stringify(body),
         })
         const data = await response.json().catch(() => null)
+        console.log('External API response status:', response.status)
+        console.log('External API response data:', data)
         return NextResponse.json(data, { status: response.status })
     } catch (err) {
+        console.error('Proxy error:', err)
         return NextResponse.json({ error: 'Proxy error', details: String(err) }, { status: 500 })
     }
 }

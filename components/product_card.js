@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation'
 import { addItem } from '@/lib/cart_store'
 import { MinusCircle, PlusCircle } from 'lucide-react'
 import { useToast } from '@/context/toast_context'
+import { usePayment } from '@/context/payment_context'
 
 export default function ProductCard({ id, name, description, price, image }) {
     const [open, setOpen] = useState(false)
     const [qty, setQty] = useState(1)
     const [visible, setVisible] = useState(false)
     const { showToast } = useToast()
+    const { openPayment } = usePayment()
     const router = useRouter()
 
     useEffect(() => {
@@ -60,9 +62,8 @@ export default function ProductCard({ id, name, description, price, image }) {
 
     function handleBuyNow(e) {
         e.stopPropagation()
-        addItem({ id, name, price, image, qty })
-        showToast(`${qty} × ${name} agregado al carrito`, { type: 'success' })
-        closeWithAnimation(() => router.push('/payment'))
+        showToast(`Comprando ${qty} × ${name}`, { type: 'success' })
+        closeWithAnimation(() => openPayment(price * qty, { item: { id, name, price, image, qty } }))
     }
 
     return (

@@ -98,7 +98,7 @@ export default function CartModal({ open, onClose, cartCount, onContinuePurchase
                     )}
                     {items.length > 0 && (
                         <div className="mt-4">
-                            <button onClick={(e) => { e.stopPropagation(); onClose && onClose(); onContinuePurchase && onContinuePurchase(); }} className="w-full bg-gradient-to-r to-[#006DEC] from-[#7AD0EC] text-black py-3 rounded-xl">Continuar con la compra</button>
+                            <button onClick={(e) => { e.stopPropagation(); onClose && onClose(); onContinuePurchase && onContinuePurchase(); }} className="w-full bg-gradient-to-r to-[#006DEC] from-[#7AD0EC] text-black py-3 rounded-xl cursor-pointer">Continuar con la compra</button>
                         </div>
                     )}
                 </div>

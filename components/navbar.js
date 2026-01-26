@@ -4,20 +4,20 @@ import { ShoppingCart, Menu, Search, Trash2, PlusCircle, MinusCircle } from 'luc
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth_context'
+import { usePayment } from '@/context/payment_context'
 import { useState, useEffect } from 'react'
 import SlideMenu from './slide_menu'
 import CartModal from './cart_modal'
-import PaymentModal from './payment_modal'
 import { subscribe, getCount, getItems, clear } from '@/lib/cart_store'
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { openPayment } = usePayment();
   const routes = ["/prints", "/services", "/products", "/services/photo"];
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getCount())
   const [cartOpen, setCartOpen] = useState(false)
-  const [paymentOpen, setPaymentOpen] = useState(false)
 
   useEffect(() => {
     const unsub = subscribe(() => {
@@ -27,12 +27,9 @@ export default function Navbar() {
   }, [])
 
   const handleContinuePurchase = () => {
-    setPaymentOpen(true)
-  }
-
-  const handlePaymentResult = (res) => {
-    setPaymentOpen(false)
-    clear()
+    const items = getItems()
+    const total = items.reduce((s, it) => s + (Number(it.price) || 0) * (it.qty || 1), 0)
+    openPayment(total, { cartItems: items })
   }
 
   useEffect(() => {
@@ -87,14 +84,6 @@ export default function Navbar() {
         </nav>
         <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
         <CartModal open={cartOpen} onClose={() => setCartOpen(false)} cartCount={cartCount} onContinuePurchase={handleContinuePurchase} />
-        <PaymentModal
-          open={paymentOpen}
-          onClose={() => setPaymentOpen(false)}
-          amount={getItems().reduce((s, it) => s + (Number(it.price) || 0) * (it.qty || 1), 0)}
-          currency={'MXN'}
-          context={{ cartItems: getItems() }}
-          onPay={handlePaymentResult}
-        />
       </>
 
     )
