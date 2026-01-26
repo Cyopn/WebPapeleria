@@ -7,7 +7,8 @@ import { useAuth } from '@/context/auth_context'
 import { useState, useEffect } from 'react'
 import SlideMenu from './slide_menu'
 import CartModal from './cart_modal'
-import { subscribe, getCount} from '@/lib/cart_store'
+import PaymentModal from './payment_modal'
+import { subscribe, getCount, getItems, clear } from '@/lib/cart_store'
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -16,6 +17,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getCount())
   const [cartOpen, setCartOpen] = useState(false)
+  const [paymentOpen, setPaymentOpen] = useState(false)
 
   useEffect(() => {
     const unsub = subscribe(() => {
@@ -23,6 +25,15 @@ export default function Navbar() {
     })
     return unsub
   }, [])
+
+  const handleContinuePurchase = () => {
+    setPaymentOpen(true)
+  }
+
+  const handlePaymentResult = (res) => {
+    setPaymentOpen(false)
+    clear()
+  }
 
   useEffect(() => {
   }, [cartOpen])
@@ -75,7 +86,15 @@ export default function Navbar() {
           </div>
         </nav>
         <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-        <CartModal open={cartOpen} onClose={() => setCartOpen(false)} cartCount={cartCount} />
+        <CartModal open={cartOpen} onClose={() => setCartOpen(false)} cartCount={cartCount} onContinuePurchase={handleContinuePurchase} />
+        <PaymentModal
+          open={paymentOpen}
+          onClose={() => setPaymentOpen(false)}
+          amount={getItems().reduce((s, it) => s + (Number(it.price) || 0) * (it.qty || 1), 0)}
+          currency={'MXN'}
+          context={{ cartItems: getItems() }}
+          onPay={handlePaymentResult}
+        />
       </>
 
     )
@@ -128,7 +147,7 @@ export default function Navbar() {
         </div>
       </nav>
       <SlideMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <CartModal open={cartOpen} onClose={() => setCartOpen(false)} cartCount={cartCount} />
+      <CartModal open={cartOpen} onClose={() => setCartOpen(false)} cartCount={cartCount} onContinuePurchase={handleContinuePurchase} />
     </>
 
   )

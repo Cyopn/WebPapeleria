@@ -55,23 +55,43 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
         if (loading) return
         setLoading(true)
         if (method === 'cash') {
-                ; (async () => {
-                    try {
-                        async function req(path, method = 'GET', body = null) {
-                            const headers = { 'Content-Type': 'application/json' }
-                            const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null
-                            const token = user?.token
-                            if (token) headers['Authorization'] = `Bearer ${token}`
-                            const opts = { method, headers }
-                            if (body) opts.body = JSON.stringify(body)
-                            const res = await fetch(`/api${path}`, opts)
-                            const text = await res.text()
-                            let data
-                            try { data = text ? JSON.parse(text) : null } catch (e) { data = text }
-                            if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}: ${JSON.stringify(data)}`)
-                            return data
-                        }
+            ; (async () => {
+                try {
+                    async function req(path, method = 'GET', body = null) {
+                        const headers = { 'Content-Type': 'application/json' }
+                        const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null
+                        const token = user?.token
+                        if (token) headers['Authorization'] = `Bearer ${token}`
+                        const opts = { method, headers }
+                        if (body) opts.body = JSON.stringify(body)
+                        const res = await fetch(`/api${path}`, opts)
+                        const text = await res.text()
+                        let data
+                        try { data = text ? JSON.parse(text) : null } catch (e) { data = text }
+                        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}: ${JSON.stringify(data)}`)
+                        return data
+                    }
 
+                    const cartItems = (context && Array.isArray(context.cartItems)) ? context.cartItems : []
+
+                    let details = []
+
+                    if (cartItems.length > 0) {
+                        for (const it of cartItems) {
+                            const prodPayload = {
+                                type: 'product',
+                                description: it.name || it.title || 'Artículo',
+                                price: Number(it.price || 0),
+                                amount: Number(it.qty || 1),
+                                observations: '',
+                                status: 'pending'
+                            }
+                            const prodRes = await req('/products', 'POST', prodPayload)
+                            const prodId = prodRes?.id_item ?? prodRes?.id_product ?? prodRes?.id ?? null
+                            if (!prodId) throw new Error('No se obtuvo id de producto para ' + (it.name || it.id || 'item'))
+                            details.push({ id_product: prodId, amount: Number(it.qty || 1), price: Number(it.price || 0) })
+                        }
+                    } else {
                         const filename = lastUpload?.filename || lastUpload?.filehash || null
                         const idFileValue = lastUpload?.id_file ?? lastUpload?.id ?? lastUpload?.fileId ?? null
                         const prodPayload = {
@@ -92,37 +112,36 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         }
                         const prodRes = await req('/products', 'POST', prodPayload)
                         const prodId = prodRes?.id_item ?? prodRes?.id_product ?? prodRes?.id ?? null
-
                         if (!prodId) throw new Error('No se obtuvo id de producto')
-
-                        const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null
-                        const userId = user.user.id_user
-                        const trxPayload = {
-                            type: 'compra',
-                            date: new Date().toISOString(),
-                            id_user: userId,
-                            status: 'pending',
-                            payament_method: 'cash',
-                            details: [
-                                { id_product: prodId, amount: Number(quantity), price: Number(priceData?.pricePerSet || 0) }
-                            ]
-                        }
-                        const trxRes = await req('/transactions', 'POST', trxPayload)
-                        const trxId = trxRes?.id_transaction ?? trxRes?.id ?? null
-
-                        if (!trxId) throw new Error('No se obtuvo id de transacción')
-
-                        try { const trxFull = await req(`/transactions/${trxId}`, 'GET'); console.log('[PaymentModal] fetched trx full', trxFull) } catch (e) { console.warn('[PaymentModal] could not fetch full transaction', String(e)) }
-                        setLoading(false)
-                        showToast('Pago en efectivo registrado correctamente', { type: 'success' })
-                        onPay && onPay({ method: 'cash', amount, transactionId: trxId })
-                        onClose && onClose()
-                        setTimeout(() => { try { window.location.reload() } catch (e) { /* ignore */ } }, 3000)
-                    } catch (err) {
-                        setLoading(false)
-                        showToast(err?.message || 'Error procesando pago en efectivo', { type: 'error' })
+                        details.push({ id_product: prodId, amount: Number(quantity || 1), price: Number(priceData?.pricePerSet || 0) })
                     }
-                })()
+
+                    const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null
+                    const userId = user?.user?.id_user ?? user?.user?.id ?? null
+                    const trxPayload = {
+                        type: 'compra',
+                        date: new Date().toISOString(),
+                        id_user: userId,
+                        status: 'pending',
+                        payament_method: 'cash',
+                        details
+                    }
+                    const trxRes = await req('/transactions', 'POST', trxPayload)
+                    const trxId = trxRes?.id_transaction ?? trxRes?.id ?? null
+
+                    if (!trxId) throw new Error('No se obtuvo id de transacción')
+
+                    try { const trxFull = await req(`/transactions/${trxId}`, 'GET'); console.log('[PaymentModal] fetched trx full', trxFull) } catch (e) { console.warn('[PaymentModal] could not fetch full transaction', String(e)) }
+                    setLoading(false)
+                    showToast('Pago en efectivo registrado correctamente', { type: 'success' })
+                    onPay && onPay({ method: 'cash', amount, transactionId: trxId })
+                    onClose && onClose()
+                    setTimeout(() => { try { window.location.reload() } catch (e) { /* ignore */ } }, 3000)
+                } catch (err) {
+                    setLoading(false)
+                    showToast(err?.message || 'Error procesando pago en efectivo', { type: 'error' })
+                }
+            })()
             return
         }
 

@@ -1,11 +1,10 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
 import Image from 'next/image'
 import { MinusCircle, PlusCircle, Trash2 } from 'lucide-react'
 import { getItems, addItem, decrementItem, removeItem } from '@/lib/cart_store'
 
-export default function CartModal({ open, onClose, cartCount }) {
+export default function CartModal({ open, onClose, cartCount, onContinuePurchase }) {
     const [mounted, setMounted] = useState(Boolean(open))
     const [visible, setVisible] = useState(Boolean(open))
     const ANIM_DURATION = 200
@@ -51,7 +50,7 @@ export default function CartModal({ open, onClose, cartCount }) {
     }, [open, mounted])
 
     if (!mounted) return null
-    
+
     const items = getItems()
 
     return (
@@ -99,9 +98,7 @@ export default function CartModal({ open, onClose, cartCount }) {
                     )}
                     {items.length > 0 && (
                         <div className="mt-4">
-                            <Link href="/payment">
-                                <button onClick={onClose} className="w-full bg-gradient-to-r to-[#006DEC] from-[#7AD0EC] text-black py-3 rounded-xl">Continuar con la compra</button>
-                            </Link>
+                            <button onClick={(e) => { e.stopPropagation(); onClose && onClose(); onContinuePurchase && onContinuePurchase(); }} className="w-full bg-gradient-to-r to-[#006DEC] from-[#7AD0EC] text-black py-3 rounded-xl">Continuar con la compra</button>
                         </div>
                     )}
                 </div>
