@@ -5,13 +5,13 @@ export default async function ProductArteWrapper() {
     const BEARER_TOKEN = process.env.BEARER_TOKEN
     const res = await fetch(`${API_URL}/products/`, {
         headers: {
-            "Accept": "*/*",
-            "Content-Type": "application/json; charset=utf-8",
-            "Authorization": `Bearer ${BEARER_TOKEN}`,
+            'Accept': '*/*',
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': `Bearer ${BEARER_TOKEN}`,
         },
         cache: 'no-store',
     });
-    const data = await res.json();0
+    const data = await res.json(); 0
     const merged = (data.products || [])
         .filter(item => item?.item)
         .map(item => ({
@@ -32,9 +32,9 @@ export default async function ProductArteWrapper() {
     })
 
     const finalItems = merged.filter(mi => mi.file && mi.file.type === 'arte_y_diseno');
-    
+
     return (
-        <div className="grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full">
+        <div className='grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full'>
             {finalItems.map(item => (
                 <ProductCard
                     key={item.id}

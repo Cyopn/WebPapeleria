@@ -29,9 +29,9 @@ export async function GET(request) {
         const upstream = `${API_URL}/users`
         const res = await fetch(upstream, {
             method: 'GET', headers: {
-                "Accept": "*/*",
-                "Content-Type": "application/json; charset=utf-8",
-                "Authorization": `Bearer ${BEARER_TOKEN}`,
+                'Accept': '*/*',
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Bearer ${BEARER_TOKEN}`,
             }
         })
         const txt = await res.text().catch(() => '')

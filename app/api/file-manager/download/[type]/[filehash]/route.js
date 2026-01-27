@@ -33,7 +33,7 @@ export async function GET(_req, { params }) {
         const headers = {
             'Content-Type': 'application/pdf',
             'Content-Length': String(buffer.length),
-            'Content-Disposition': `inline; filename="${filehash}.pdf"`,
+            'Content-Disposition': `inline; filename='${filehash}.pdf'`,
             'Cache-Control': 'no-cache, no-store, must-revalidate',
         }
         return new Response(buffer, { status: 200, headers })

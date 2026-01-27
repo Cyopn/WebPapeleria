@@ -100,118 +100,118 @@ export default function SlideMenu({ open, onClose }) {
                 className={`absolute top-0 right-0 h-full w-[25%] bg-white rounded-l-4xl overflow-hidden shadow-2xl transform transition-transform duration-300 ease-in-out flex flex-col ${open ? 'translate-x-0' : 'translate-x-full'
                     }`}
             >
-                <div className="flex items-center justify-between pt-1.5 pb-1.5 bg-gradient-to-r from-[#8AD8F2] to-[#318BEF] rounded-tl-4xl  oveflow-hidden">
+                <div className='flex items-center justify-between pt-1.5 pb-1.5 bg-gradient-to-r from-[#8AD8F2] to-[#318BEF] rounded-tl-4xl  oveflow-hidden'>
                     <button
                         onClick={onClose}
-                        className="p-1 transition rotate-180"
+                        className='p-1 transition rotate-180'
                     >
-                        <span className="pr-4 text-lg text-black cursor-pointer">
-                            <span className="fi fi-br-exit"></span>
+                        <span className='pr-4 text-lg text-black cursor-pointer'>
+                            <span className='fi fi-br-exit'></span>
                         </span>
                     </button>
                 </div>
-                <nav className="p-4 space-y-3 w-full flex-1 overflow-auto">
-                    <div className="w-full h-full flex flex-col min-h-0">
-                        <div className="w-full h-[25%] flex justify-center items-center py-2">
+                <nav className='p-4 space-y-3 w-full flex-1 overflow-auto'>
+                    <div className='w-full h-full flex flex-col min-h-0'>
+                        <div className='w-full h-[25%] flex justify-center items-center py-2'>
                             <Image
                                 src={userData.avatar || '/images/no-image.png'}
                                 alt={userData.name || 'avatar'}
-                                className="h-[80%] w-auto rounded-full"
+                                className='h-[80%] w-auto rounded-full'
                                 width={300}
                                 height={300}
-                                loading="eager" />
+                                loading='eager' />
                         </div>
-                        <div className="w-full flex justify-center items-center text-black py-2">
-                            <span className="text-lg">{userData.name || 'Nombre'}</span>
+                        <div className='w-full flex justify-center items-center text-black py-2'>
+                            <span className='text-lg'>{userData.name || 'Nombre'}</span>
                         </div>
-                        <div className="w-full flex justify-center items-center text-black text-center py-2">
-                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opcion no disponible') }} className="relative w-[45%] py-5 cursor-pointer">
-                                <div className="flex justify-center items-center">
-                                    <span className="text-3xl">
-                                        <span className="fi fi-rr-shopping-cart-check"></span>
+                        <div className='w-full flex justify-center items-center text-black text-center py-2'>
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opcion no disponible') }} className='relative w-[45%] py-5 cursor-pointer'>
+                                <div className='flex justify-center items-center'>
+                                    <span className='text-3xl'>
+                                        <span className='fi fi-rr-shopping-cart-check'></span>
                                     </span>
                                 </div>
-                                <label className="cursor-pointer">Mis pedidos</label>
+                                <label className='cursor-pointer'>Mis pedidos</label>
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opcion no disponible') }} className="relative w-[45%] py-5 cursor-pointer">
-                                <div className="flex justify-center items-center">
-                                    <span className="text-3xl">
-                                        <span className="fi fi-rr-cowbell"></span>
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opcion no disponible') }} className='relative w-[45%] py-5 cursor-pointer'>
+                                <div className='flex justify-center items-center'>
+                                    <span className='text-3xl'>
+                                        <span className='fi fi-rr-cowbell'></span>
                                     </span>
                                 </div>
-                                <label className="cursor-pointer">Notificaciones</label>
+                                <label className='cursor-pointer'>Notificaciones</label>
                             </button>
                         </div>
-                        <div className="w-full flex flex-col justify-center items-center text-left py-2">
-                            <div className="w-[85%] py-1 text-gray-500 py-3">
+                        <div className='w-full flex flex-col justify-center items-center text-left py-2'>
+                            <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Nombre</label>
-                                <input value={userData.name} readOnly className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" />
+                                <input value={userData.name} readOnly className='block w-full p-2 w-full rounded-full bg-gray-200 text-center' />
                             </div>
-                            <div className="w-[85%] py-1 text-gray-500 py-3">
+                            <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Correo</label>
-                                <input value={userData.email} readOnly className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" />
+                                <input value={userData.email} readOnly className='block w-full p-2 w-full rounded-full bg-gray-200 text-center' />
                             </div>
-                            <div className="w-[85%] py-1 text-gray-500 py-3">
+                            <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Numero de telefono</label>
-                                <input value={userData.phone} readOnly className="block w-full p-2 w-full rounded-full bg-gray-200 text-center" />
+                                <input value={userData.phone} readOnly className='block w-full p-2 w-full rounded-full bg-gray-200 text-center' />
                             </div>
                         </div>
-                        <div onClick={(e) => { e.preventDefault(); showToast('Opcion no disponible') }} className="w-full flex flex-col justify-center items-center text-left py-2">
-                            <div className="w-full py-3">
-                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
-                                    <div className="pl-10 w-auto">
-                                        <span className="text-xl px-2 h-full text-black">
-                                            <span className="fi fi-br-document"></span>
+                        <div onClick={(e) => { e.preventDefault(); showToast('Opcion no disponible') }} className='w-full flex flex-col justify-center items-center text-left py-2'>
+                            <div className='w-full py-3'>
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
+                                    <div className='pl-10 w-auto'>
+                                        <span className='text-xl px-2 h-full text-black'>
+                                            <span className='fi fi-br-document'></span>
                                         </span>
                                     </div>
-                                    <div className="w-full text-left">
-                                        <span className="pl-5">Administrador de cuenta</span>
+                                    <div className='w-full text-left'>
+                                        <span className='pl-5'>Administrador de cuenta</span>
                                     </div>
-                                    <div className="pr-10 w-auto">
-                                        <span className="flex items-center  text-xl px-2 text-black">
-                                            <span className="fi fi-br-exit"></span>
-                                        </span>
-                                    </div>
-                                </a>
-                            </div>
-                            <div className="w-full py-3">
-                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
-                                    <div className="pl-10 w-auto">
-                                        <span className="text-xl px-2 h-full text-black">
-                                            <span className="fi fi-br-document"></span>
-                                        </span>
-                                    </div>
-                                    <div className="w-full text-left">
-                                        <span className="pl-5">Historial de pedidos</span>
-                                    </div>
-                                    <div className="pr-10 w-auto">
-                                        <span className="flex items-center  text-xl px-2 text-black">
-                                            <span className="fi fi-br-exit"></span>
+                                    <div className='pr-10 w-auto'>
+                                        <span className='flex items-center  text-xl px-2 text-black'>
+                                            <span className='fi fi-br-exit'></span>
                                         </span>
                                     </div>
                                 </a>
                             </div>
-                            <div className="w-full py-3">
-                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className="text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full">
-                                    <div className="pl-10 w-auto">
-                                        <span className="text-xl px-2 h-full text-black">
-                                            <span className="fi fi-br-document"></span>
+                            <div className='w-full py-3'>
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
+                                    <div className='pl-10 w-auto'>
+                                        <span className='text-xl px-2 h-full text-black'>
+                                            <span className='fi fi-br-document'></span>
                                         </span>
                                     </div>
-                                    <div className="w-full text-left">
-                                        <span className="pl-5">Soporte y ayuda</span>
+                                    <div className='w-full text-left'>
+                                        <span className='pl-5'>Historial de pedidos</span>
                                     </div>
-                                    <div className="pr-10 w-auto">
-                                        <span className="flex items-center  text-xl px-2 text-black">
-                                            <span className="fi fi-br-exit"></span>
+                                    <div className='pr-10 w-auto'>
+                                        <span className='flex items-center  text-xl px-2 text-black'>
+                                            <span className='fi fi-br-exit'></span>
                                         </span>
                                     </div>
                                 </a>
                             </div>
-                            <div className="w-full py-3 flex items-center justify-center">
-                                <div className="text-black text-bold text-center p-3 w-full flex items-center justify-center">
-                                    <button onClick={handleLogout} className="p-3 rounded flex items-center cursor-pointer gap-3">
-                                        <span className="pl-5">Cerrar sesión</span>
+                            <div className='w-full py-3'>
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
+                                    <div className='pl-10 w-auto'>
+                                        <span className='text-xl px-2 h-full text-black'>
+                                            <span className='fi fi-br-document'></span>
+                                        </span>
+                                    </div>
+                                    <div className='w-full text-left'>
+                                        <span className='pl-5'>Soporte y ayuda</span>
+                                    </div>
+                                    <div className='pr-10 w-auto'>
+                                        <span className='flex items-center  text-xl px-2 text-black'>
+                                            <span className='fi fi-br-exit'></span>
+                                        </span>
+                                    </div>
+                                </a>
+                            </div>
+                            <div className='w-full py-3 flex items-center justify-center'>
+                                <div className='text-black text-bold text-center p-3 w-full flex items-center justify-center'>
+                                    <button onClick={handleLogout} className='p-3 rounded flex items-center cursor-pointer gap-3'>
+                                        <span className='pl-5'>Cerrar sesión</span>
                                     </button>
                                 </div>
                             </div>

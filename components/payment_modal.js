@@ -181,12 +181,12 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
             <div
                 onClick={(e) => e.stopPropagation()}
                 className={`bg-white rounded-xl w-full max-w-[60%] mx-6 pb-6 transform transition-all flex flex-col items-center duration-${ANIM_DURATION} ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
-                <div className="w-full bg-[#A8D860AB] rounded-t-xl px-6">
-                    <h3 className="text-xl font-semibold text-black py-2">Gestion de pago</h3>
+                <div className='w-full bg-[#A8D860AB] rounded-t-xl px-6'>
+                    <h3 className='text-xl font-semibold text-black py-2'>Gestion de pago</h3>
                 </div>
-                <p className="mt-2 text-sm text-gray-600">Total: <span className="font-medium">{currency} {displayAmount}</span></p>
-                <div className="w-[80%] mt-4 text-black">
-                    <div className="flex gap-2 flex justify-between py-2">
+                <p className='mt-2 text-sm text-gray-600'>Total: <span className='font-medium'>{currency} {displayAmount}</span></p>
+                <div className='w-[80%] mt-4 text-black'>
+                    <div className='flex gap-2 flex justify-between py-2'>
                         <button
                             onClick={() => setMethod('cash')}
                             className={`flex-1 py-2 rounded-md cursor-pointer ${method === 'cash' ? 'bg-gray-100 border border-gray-300' : 'bg-white border'} text-sm`}
@@ -197,20 +197,20 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         >PayPal</button>
                     </div>
                     {method === 'cash' && (
-                        <div className="text-sm text-gray-700">
+                        <div className='text-sm text-gray-700'>
                             <p>Entrega y pago en efectivo al recibir. Asegúrate de tener el monto exacto.</p>
                         </div>
                     )}
                     {method === 'paypal' && (
-                        <div className="text-sm text-gray-700">
+                        <div className='text-sm text-gray-700'>
                             <p>Se te redirigirá a PayPal para completar el pago.</p>
                         </div>
                     )}
-                    <div className="mt-4">
+                    <div className='mt-4'>
                         <button
                             onClick={handlePay}
                             disabled={loading}
-                            className="w-full bg-gradient-to-r from-[#7AD0EC] to-[#006DEC] text-black py-3 rounded-xl cursor-pointer "
+                            className='w-full bg-gradient-to-r from-[#7AD0EC] to-[#006DEC] text-black py-3 rounded-xl cursor-pointer '
                         >{loading ? 'Procesando...' : 'Pagar'}</button>
                     </div>
                 </div>

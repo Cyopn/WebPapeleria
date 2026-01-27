@@ -18,9 +18,9 @@ export default function ProductCarousel({ items }) {
         setItemsToShow(shuffled.slice(0, 10));
     }, [items]);
     return (
-        <div className="w-full h-full">
+        <div className='w-full h-full'>
             <Swiper
-                className="h-[90%]"
+                className='h-[90%]'
                 modules={[Navigation, Pagination, Autoplay]}
                 navigation
                 pagination={{ clickable: true }}

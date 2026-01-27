@@ -1,4 +1,4 @@
-"use client"
+'use client'
 import React, { createContext, useContext, useState } from 'react'
 import PaymentModal from '@/components/payment_modal'
 
@@ -30,7 +30,7 @@ export function PaymentProvider({ children }) {
                 open={paymentOpen}
                 onClose={closePayment}
                 amount={paymentAmount}
-                currency="MXN"
+                currency='MXN'
                 context={paymentContext}
                 onPay={handlePaymentResult}
             />

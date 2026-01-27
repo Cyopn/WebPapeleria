@@ -7,8 +7,8 @@ export async function POST(request) {
         const res = await fetch(`${API_URL}/users/login`, {
             method: 'POST',
             headers: {
-                "Accept": "*/*",
-                "Content-Type": "application/json; charset=utf-8",
+                'Accept': '*/*',
+                'Content-Type': 'application/json; charset=utf-8',
             },
             body: JSON.stringify(body),
         });

@@ -5,9 +5,9 @@ export default async function ProductPapeleriaWrapper() {
     const BEARER_TOKEN = process.env.BEARER_TOKEN
     const res = await fetch(`${API_URL}/products/`, {
         headers: {
-            "Accept": "*/*",
-            "Content-Type": "application/json; charset=utf-8",
-            "Authorization": `Bearer ${BEARER_TOKEN}`,
+            'Accept': '*/*',
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': `Bearer ${BEARER_TOKEN}`,
         },
         cache: 'no-store',
     });
@@ -26,7 +26,7 @@ export default async function ProductPapeleriaWrapper() {
     const finalItems = merged.filter(mi => mi.file && mi.file.type === 'papeleria');
 
     return (
-        <div className="grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full">
+        <div className='grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full'>
             {finalItems.map(item => (
                 <ProductCard
                     key={item.id}

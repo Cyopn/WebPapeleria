@@ -49,7 +49,7 @@ export async function GET(_req, { params }) {
             const headers = {
                 'Content-Type': 'application/pdf',
                 'Content-Length': String(stat.size),
-                'Content-Disposition': `inline; filename="${filename}"`,
+                'Content-Disposition': `inline; filename='${filename}'`,
                 'Cache-Control': 'public, max-age=3600',
             }
             return new Response(stream, { status: 200, headers })
@@ -92,7 +92,7 @@ export async function GET(_req, { params }) {
         const headers = {
             'Content-Type': 'application/pdf',
             'Content-Length': String(buffer.length),
-            'Content-Disposition': `inline; filename="${filename}"`,
+            'Content-Disposition': `inline; filename='${filename}'`,
             'Cache-Control': 'public, max-age=3600',
         }
         return new Response(buffer, { status: 200, headers })
