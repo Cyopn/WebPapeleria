@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getAuthHeaderFromRequest } from '@/lib/get_auth_header'
 
 export async function POST(request) {
   let body
@@ -19,7 +20,7 @@ export async function POST(request) {
     }
   }
 
-  let authHeader = request.headers.get('authorization') || (user && user.token ? `Bearer ${user.token}` : null)
+  let authHeader = getAuthHeaderFromRequest(request) || (user && user.token ? `Bearer ${user.token}` : null)
   if (!authHeader) {
     try {
       const cookieHeader = request.headers.get('cookie') || ''

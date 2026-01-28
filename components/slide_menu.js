@@ -24,8 +24,49 @@ export default function SlideMenu({ open, onClose }) {
         if (window.__modalOpenCount === 0) document.body.style.overflow = ''
     }
 
+    const router = useRouter()
+    const { showToast } = useToast()
+    const [userData, setUserData] = useState(() => {
+        if (typeof window === 'undefined') return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' }
+        try {
+            const raw = localStorage.getItem('user')
+            if (!raw) return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' }
+            const parsed = JSON.parse(raw)
+            const u = parsed?.user || parsed || {}
+            return {
+                name: u.names || u.nombre || '',
+                username: u.username || '',
+                email: u.email || u.correo || '',
+                phone: u.phone || u.telefono || u.phone || '',
+                avatar: u.avatar || u.photo || u.profileImageUrl || '/images/no-image.png'
+            }
+        } catch (err) {
+            console.error('[SlideMenu] Error al parsear usuario desde localStorage', err)
+            return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' }
+        }
+    })
+
     useEffect(() => {
         if (open) {
+            // Si el usuario por defecto (id:1) está activo, no abrir el menú;
+            // mostrar solo el toast y pedir el cierre al padre.
+            try {
+                if (typeof window !== 'undefined') {
+                    const raw = localStorage.getItem('user')
+                    if (raw) {
+                        const parsed = JSON.parse(raw)
+                        const u = parsed?.user || parsed || {}
+                        const maybeId = parsed?.id || parsed?.user?.id || u?.id || null
+                        if (maybeId === 1) {
+                            try { showToast('Función disponible iniciando sesión') } catch (e) { console.error('[SlideMenu] showToast fallo', e) }
+                            if (typeof onClose === 'function') onClose()
+                            return
+                        }
+                    }
+                }
+            } catch (e) {
+                // ignore and proceed to lock
+            }
             lockBody()
         } else {
             unlockBody()
@@ -33,31 +74,10 @@ export default function SlideMenu({ open, onClose }) {
         return () => {
             if (lockRef.current) unlockBody()
         }
-    }, [open])
+    }, [open, onClose, showToast])
 
-    const router = useRouter()
-    const { showToast } = useToast()
-    const [userData, setUserData] = useState({ name: '', email: '', phone: '', avatar: '/images/no-image.png' })
-
-    useEffect(() => {
-        if (typeof window === 'undefined') return
-        try {
-            const raw = localStorage.getItem('user')
-            if (!raw) return
-            const parsed = JSON.parse(raw)
-            const u = parsed?.user || parsed || {}
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setUserData({
-                name: u.names || u.nombre || '',
-                username: u.username || '',
-                email: u.email || u.correo || '',
-                phone: u.phone || u.telefono || u.phone || '',
-                avatar: u.avatar || u.photo || u.profileImageUrl || '/images/no-image.png'
-            })
-        } catch (err) {
-            console.error('Failed to parse user from localStorage', err)
-        }
-    }, [open])
+    // userData is initialized lazily from localStorage to avoid
+    // calling setState synchronously inside an effect (cascading renders).
 
     function handleLogout(e) {
         e?.stopPropagation()
@@ -68,7 +88,7 @@ export default function SlideMenu({ open, onClose }) {
                 localStorage.removeItem('cart_items_v1')
             }
         } catch (err) {
-            console.error('Logout cleanup failed', err)
+            console.error('[SlideMenu] Error durante limpieza de sesión al cerrar sesión', err)
         }
         onClose && onClose()
         try {
@@ -77,7 +97,7 @@ export default function SlideMenu({ open, onClose }) {
                 document.cookie = 'token=; Max-Age=0; path=/;'
             }
         } catch (e) {
-            console.error('Failed to clear auth cookies', e)
+            console.error('[SlideMenu] Error al borrar cookies de autenticación', e)
         }
         if (typeof window !== 'undefined') {
             window.location.replace('/')
@@ -125,7 +145,7 @@ export default function SlideMenu({ open, onClose }) {
                             <span className='text-lg'>{userData.name || 'Nombre'}</span>
                         </div>
                         <div className='w-full flex justify-center items-center text-black text-center py-2'>
-                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opcion no disponible') }} className='relative w-[45%] py-5 cursor-pointer'>
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opción no disponible') }} className='relative w-[45%] py-5 cursor-pointer'>
                                 <div className='flex justify-center items-center'>
                                     <span className='text-3xl'>
                                         <span className='fi fi-rr-shopping-cart-check'></span>
@@ -133,7 +153,7 @@ export default function SlideMenu({ open, onClose }) {
                                 </div>
                                 <label className='cursor-pointer'>Mis pedidos</label>
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opcion no disponible') }} className='relative w-[45%] py-5 cursor-pointer'>
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opción no disponible') }} className='relative w-[45%] py-5 cursor-pointer'>
                                 <div className='flex justify-center items-center'>
                                     <span className='text-3xl'>
                                         <span className='fi fi-rr-cowbell'></span>
@@ -152,13 +172,13 @@ export default function SlideMenu({ open, onClose }) {
                                 <input value={userData.email} readOnly className='block w-full p-2 w-full rounded-full bg-gray-200 text-center' />
                             </div>
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
-                                <label>Numero de telefono</label>
+                                <label>Número de teléfono</label>
                                 <input value={userData.phone} readOnly className='block w-full p-2 w-full rounded-full bg-gray-200 text-center' />
                             </div>
                         </div>
-                        <div onClick={(e) => { e.preventDefault(); showToast('Opcion no disponible') }} className='w-full flex flex-col justify-center items-center text-left py-2'>
+                        <div onClick={(e) => { e.preventDefault(); showToast('Opción no disponible') }} className='w-full flex flex-col justify-center items-center text-left py-2'>
                             <div className='w-full py-3'>
-                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opción no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
                                     <div className='pl-10 w-auto'>
                                         <span className='text-xl px-2 h-full text-black'>
                                             <span className='fi fi-br-document'></span>
@@ -175,7 +195,7 @@ export default function SlideMenu({ open, onClose }) {
                                 </a>
                             </div>
                             <div className='w-full py-3'>
-                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opción no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
                                     <div className='pl-10 w-auto'>
                                         <span className='text-xl px-2 h-full text-black'>
                                             <span className='fi fi-br-document'></span>
@@ -192,7 +212,7 @@ export default function SlideMenu({ open, onClose }) {
                                 </a>
                             </div>
                             <div className='w-full py-3'>
-                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opcion no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opción no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
                                     <div className='pl-10 w-auto'>
                                         <span className='text-xl px-2 h-full text-black'>
                                             <span className='fi fi-br-document'></span>

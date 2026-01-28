@@ -127,12 +127,12 @@ export async function POST(req) {
                 const filePath = path.join(CACHE_DIR, filename)
                 fs.writeFileSync(filePath, Buffer.from(pdfBytes))
                 setTimeout(() => {
-                    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath) } catch (e) { console.error('[PDF Cache] cleanup failed', e && e.message) }
+                    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath) } catch (e) { console.error('[Cache PDF] limpieza fallida', e && e.message) }
                 }, 30 * 60 * 1000)
 
                 return NextResponse.json({ ok: true, hash })
             } catch (e) {
-                console.error('store pdf error', e)
+                console.error('[GeneratePDFAPI] Error guardando PDF', e)
                 return NextResponse.json({ error: 'Failed to store PDF' }, { status: 500 })
             }
         }
@@ -145,7 +145,7 @@ export async function POST(req) {
             },
         })
     } catch (err) {
-        console.error('generate-pdf error', err)
+        console.error('[GeneratePDFAPI] Error al generar PDF', err)
         return NextResponse.json({ error: 'Server error generating PDF' }, { status: 500 })
     }
 }

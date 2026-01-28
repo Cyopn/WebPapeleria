@@ -35,7 +35,7 @@ export default function ServicesPage() {
                                 <div className='absolute h-[10%] bottom-0 w-[22%]'>
                                     <div className='flex justify-center'>
                                         <div className='text-white text-2xl font-bold rounded-full bg-[#D9D9D980]'>
-                                            <span className='px-5'>Encuadernado e Impresion</span>
+                                            <span className='px-5'>Encuadernado e Impresión</span>
                                         </div>
                                     </div>
                                 </div>
@@ -53,7 +53,7 @@ export default function ServicesPage() {
                                 <div className='absolute h-[10%] bottom-0 w-[22%]'>
                                     <div className='flex justify-center'>
                                         <div className='text-white text-2xl font-bold rounded-full bg-[#D9D9D980]'>
-                                            <span className='px-5'>Impresion de Fotografia</span>
+                                            <span className='px-5'>Impresión de Fotografía</span>
                                         </div>
                                     </div>
                                 </div>
@@ -71,7 +71,7 @@ export default function ServicesPage() {
                                 <div className='absolute h-[10%] bottom-0 w-[22%]'>
                                     <div className='flex justify-center'>
                                         <div className='text-white text-2xl font-bold rounded-full bg-[#D9D9D980]'>
-                                            <span className='px-5'>Anillado e Impresion</span>
+                                            <span className='px-5'>Anillado e Impresión</span>
                                         </div>
                                     </div>
                                 </div>

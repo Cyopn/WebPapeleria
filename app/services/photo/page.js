@@ -94,7 +94,7 @@ export default function PhotoPage() {
             const url = URL.createObjectURL(file)
             setLocalPreview(url)
         } catch (err) {
-            console.error('preview error', err)
+            console.error('[PhotoPage] error al generar la vista previa', err)
             showError('No se pudo generar la vista previa')
         }
     }
@@ -187,7 +187,7 @@ export default function PhotoPage() {
             setLocalPreview(newUrl)
             closeCrop()
         } catch (err) {
-            console.error('crop error', err)
+            console.error('[PhotoPage] error al recortar la imagen', err)
             showError('No se pudo recortar la imagen')
         }
     }
@@ -207,7 +207,7 @@ export default function PhotoPage() {
                 const res = await fetch(cacheUrl)
                 if (!res.ok) {
                     const txt = await res.text().catch(() => '')
-                    console.error('pdf-cache fetch error', res.status, txt)
+                    console.error('[PhotoPage] error al obtener pdf-cache', res.status, txt)
                     return showError('Error al obtener el PDF en vista previa')
                 }
                 const pdfBlob = await res.blob()
@@ -231,7 +231,7 @@ export default function PhotoPage() {
 
             if (!res.ok) {
                 const errText = await res.text()
-                console.error('server pdf error', errText)
+                console.error('[PhotoPage] error del servidor al generar pdf', errText)
                 return showError('Error del servidor al generar el PDF')
             }
 
@@ -241,7 +241,7 @@ export default function PhotoPage() {
             setGeneratedPdfUrl(url)
             setPreviewOpen(true)
         } catch (err) {
-            console.error('generate pdf client error', err)
+            console.error('[PhotoPage] error cliente al generar pdf', err)
             showError('No se pudo generar el PDF')
         }
     }
@@ -265,7 +265,7 @@ export default function PhotoPage() {
 
             if (!gen.ok) {
                 const txt = await gen.text().catch(() => '')
-                console.error('generate-pdf failed', gen.status, txt)
+                console.error('[PhotoPage] generate-pdf falló', gen.status, txt)
                 return
             }
 
@@ -295,7 +295,7 @@ export default function PhotoPage() {
                 } catch (jsonErr) {
                     body = await upload.text().catch(() => '')
                 }
-                console.error('file-manager error body:', body)
+                console.error('[PhotoPage] Error en file-manager, body:', body)
                 return
             }
 
@@ -327,7 +327,7 @@ export default function PhotoPage() {
                 } catch (jsonErr) {
                     body = await reg.text().catch(() => '')
                 }
-                console.error('/api/file error body:', body)
+                console.error('[PhotoPage] Error en /api/file, body:', body)
                 return
             }
 
@@ -337,7 +337,7 @@ export default function PhotoPage() {
             try { if (typeof window !== 'undefined') showToast('Archivo subido y registrado', { type: 'success' }) } catch (e) { }
             try { calculatePrice(saved) } catch (e) { }
         } catch (err) {
-            console.error('createAndStorePdf error', err)
+            console.error('[PhotoPage] Error al crear y guardar PDF', err)
         }
         finally {
             try { setUploadLoading(false) } catch (e) { }
@@ -428,7 +428,7 @@ export default function PhotoPage() {
 
             setPriceData(normalized)
         } catch (err) {
-            console.error('calculatePrice error', err)
+            console.error('[PhotoPage] Error al calcular precio', err)
             showError(err?.message || 'Error calculando precio')
             setPriceData(null)
         } finally {
@@ -446,12 +446,12 @@ export default function PhotoPage() {
     function handlePayResult(result) {
         try {
             setPaymentOpen(false)
-            console.log('[PhotoPage] payment result', result)
+            console.log('[PhotoPage] resultado de pago', result)
             const m = result?.method || 'unknown'
             const a = result?.amount ?? (priceData?.totalPrice ?? 0)
             showToast(`Pago recibido: ${m} — $ ${a}`, { type: 'success' })
         } catch (e) {
-            console.error(e)
+            console.error('[PhotoPage] Error inesperado:', e)
         }
     }
 
@@ -690,7 +690,7 @@ export default function PhotoPage() {
                                         onClick={() => {
                                             if (priceLoading) return
                                             if (!priceData) return (showError('Calcula el precio primero'), null)
-                                            console.log('[PhotoPage] opening payment modal, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
+                                            console.log('[PhotoPage] abriendo modal de pago, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
                                             setPaymentOpen(true)
                                         }}
                                         className='text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] cursor-pointer'

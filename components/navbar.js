@@ -40,7 +40,7 @@ export default function Navbar() {
       <>
         <nav className='absolute top-0 w-full z-[99] bg-gradient-to-r from-[#0872EAA3] to-[#5B6FD79E]'>
           <div className='py-7 flex gap-0 flex-row flex-nowrap justify-evenly items-center content-center text-lg'>
-            <Link href='/' className='flex gap-10 items-center content-center'>
+            <Link href='/' className='flex gap-2 items-center content-center hover:text-yellow-300 transition'>
               <Image
                 src='/images/logo.png'
                 alt='Logo'
@@ -48,7 +48,7 @@ export default function Navbar() {
                 width={300}
                 height={300}
               />
-              Office TESChi
+              <label className='cursor-pointer'>Office TESChi</label>
             </Link>
             <Link href='/' className='hover:text-yellow-300 transition'>Inicio</Link>
             <Link href='/prints' className='hover:text-yellow-300 transition'>Impresiones</Link>
@@ -62,7 +62,7 @@ export default function Navbar() {
                 </button>
               </div>
             </div>
-            {!user && (<Link
+            {(!user || user?.id === 1) && (<Link
               href='/signin'
               className='text-black px-5 py-2 rounded-xl bg-gradient-to-r from-[#7BCE6D] to-[#A8D860]'
             >
@@ -94,7 +94,7 @@ export default function Navbar() {
     <>
       <nav className='absolute top-0 w-full z-[99]'>
         <div className='py-7 flex gap-0 flex-row flex-nowrap justify-evenly items-center content-center text-lg'>
-          <Link href='/' className='flex gap-2 items-center content-center hover:text-yellow-300 transition cursor-pointer'>
+          <Link href='/' className='flex gap-2 items-center content-center hover:text-yellow-300 transition'>
             <Image
               src='/images/logo.png'
               alt='Logo'
@@ -102,7 +102,7 @@ export default function Navbar() {
               width={300}
               height={300}
             />
-            <label>Office TESChi</label>
+            <label className='cursor-pointer'>Office TESChi</label>
           </Link>
           <Link href='/' className='hover:text-yellow-300 transition'>Inicio</Link>
           <Link href='/prints' className='hover:text-yellow-300 transition'>Impresiones</Link>
@@ -116,7 +116,7 @@ export default function Navbar() {
               </button>
             </div>
           </div>
-          {!user && (<Link
+          {(!user || user?.id === 1) && (<Link
             href='/signin'
             className='text-black px-5 py-2 rounded-xl bg-gradient-to-r from-[#7BCE6D] to-[#A8D860]'
           >

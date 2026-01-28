@@ -100,7 +100,7 @@ export default function PrintPage() {
                         body = await res.text().catch(() => '')
                     }
                     if (body) msg = `Error al subir archivo: ${body}`
-                    console.error('file-manager error body:', body)
+                    console.error('[PrintPage] Error en file-manager, body:', body)
                     showToast(msg, { type: 'error' })
                     throw new Error(msg)
                 }
@@ -134,25 +134,25 @@ export default function PrintPage() {
                         body = await res2.text().catch(() => '')
                     }
                     if (body) msg = `Error registrando archivo: ${body}`
-                    console.error('/api/file error body:', body)
+                    console.error('[PrintPage] Error en /api/file, body:', body)
                     showToast(msg, { type: 'error' })
                     throw new Error(msg)
                 }
 
                 const final = await res2.json().catch(() => null)
-                console.log('File registered', final)
+                console.log('[PrintPage] Archivo registrado', final)
                 const saved = final || payload
                 setLastUpload(saved)
                 try {
                     calculatePrice(saved)
-                } catch (err) { }
+                } catch (err) { console.error('[PrintPage] calculatePrice fallo', err) }
                 showToast('Archivo subido correctamente', { type: 'success' })
             } catch (err) {
                 const msg = err?.message || String(err) || 'Error desconocido'
-                console.error(err)
-                try { showToast(msg, { type: 'error' }) } catch (e) { }
+                console.error('[PrintPage] Error al procesar archivo:', err)
+                try { showToast(msg, { type: 'error' }) } catch (e) { console.error('[PrintPage] showToast fallo', e) }
             } finally {
-                try { setUploadLoading(false) } catch (e) { }
+                try { setUploadLoading(false) } catch (e) { console.error('[PrintPage] setUploadLoading fallo', e) }
             }
         }
     }
@@ -213,11 +213,11 @@ export default function PrintPage() {
             }
             setPriceData(data)
         } catch (err) {
-            console.error('calculatePrice error', err)
+            console.error('[PrintPage] Error al calcular precio', err)
             showToast(err?.message || 'Error calculando precio', { type: 'error' })
             setPriceData(null)
         } finally {
-            try { setPriceLoading(false) } catch (e) { }
+            try { setPriceLoading(false) } catch (e) { console.error('[PrintPage] setPriceLoading fallo', e) }
         }
     }, [printType, paperSize, br3Selected, rangeValue, bothSides, quantity, showToast])
 
@@ -232,10 +232,10 @@ export default function PrintPage() {
             setPaymentOpen(false)
             const m = result?.method || 'unknown'
             const a = result?.amount ?? (priceData?.totalPrice ?? 0)
-            console.log('[PrintPage] payment result', result)
+            console.log('[PrintPage] resultado de pago', result)
             showToast(`Pago recibido: ${m} — $ ${a}`, { type: 'success' })
         } catch (e) {
-            console.error(e)
+            console.error('[PrintPage] Error inesperado:', e)
         }
     }
 
@@ -300,16 +300,16 @@ export default function PrintPage() {
                                 <div className='w-[60%] p-2 text-black grid grid-cols-[70%_30%] grid-rows-[repeat(1,1fr)]'>
                                     <div className='w-full p-2'>
                                         <div className='w-full text-left py-1'>
-                                            <span>Tipo de impresion</span>
+                                            <span>Tipo de impresión</span>
                                         </div>
                                         <div className='w-full flex gap-[24px] flex-col justify-between'>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
                                                 <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { const v = 'blanco_negro'; setPrintType(v); if (lastUpload) calculatePrice(lastUpload, { printType: v }); }} />
-                                                <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresion Blanco y Negro</label>
+                                                <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresión Blanco y Negro</label>
                                             </div>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
                                                 <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { const v = 'color'; setPrintType(v); if (lastUpload) calculatePrice(lastUpload, { printType: v }); }} />
-                                                <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresion a Color</label>
+                                                <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresión a Color</label>
                                             </div>
                                         </div>
                                     </div>
@@ -461,8 +461,8 @@ export default function PrintPage() {
                                 </div>
                                 <div className='w-full gap-5 flex flex-row justify-end content-end items-end'>
                                     <button onClick={() => {
-                                        if (!lastUpload) { try { showToast('No hay archivo subido para previsualizar', { type: 'error' }) } catch (e) { }; return }
-                                        if (!previewFileUrl) { try { showToast('Faltan datos del archivo para la vista previa', { type: 'error' }) } catch (e) { }; return }
+                                        if (!lastUpload) { try { showToast('No hay archivo subido para previsualizar', { type: 'error' }) } catch (e) { console.error('[PrintPage] showToast fallo', e) }; return }
+                                        if (!previewFileUrl) { try { showToast('Faltan datos del archivo para la vista previa', { type: 'error' }) } catch (e) { console.error('[PrintPage] showToast fallo', e) }; return }
                                         setPreviewOpen(true)
                                     }} type='button' className='text-black text-sm px-10 p-1 rounded-full bg-[#FFC107] cursor-pointer'>Vista Previa</button>
                                     <button
@@ -470,8 +470,8 @@ export default function PrintPage() {
                                         disabled={priceLoading}
                                         onClick={() => {
                                             if (priceLoading) return
-                                            if (!priceData) { try { showToast('Carga el archivo primero', { type: 'warn' }) } catch (e) { }; return }
-                                            console.log('[PrintPage] opening payment modal, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
+                                            if (!priceData) { try { showToast('Carga el archivo primero', { type: 'warn' }) } catch (e) { console.error('[PrintPage] showToast fallo', e) }; return }
+                                            console.log('[PrintPage] abriendo modal de pago, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
                                             setPaymentOpen(true)
                                         }}
                                         className={`text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] ${priceLoading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
@@ -518,7 +518,7 @@ export default function PrintPage() {
                                                                         setNumPages(n)
                                                                         setPageNumber((p) => (p > n ? n : p))
                                                                     }}
-                                                                    onLoadError={(e) => { try { showToast(`No se pudo cargar el PDF: ${e.message || e}`, { type: 'error' }) } catch (err) { console.error(err) } }}
+                                                                    onLoadError={(e) => { try { showToast(`No se pudo cargar el PDF: ${e.message || e}`, { type: 'error' }) } catch (err) { console.error('[PrintPage] Error inesperado:', err) } }}
                                                                     loading={<div className='p-4 text-gray-600'>Cargando PDF…</div>}
                                                                 >
                                                                     <Page pageNumber={pageNumber} width={800} renderAnnotationLayer={false} renderTextLayer={false} />

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAuthHeaderFromRequest } from '@/lib/get_auth_header';
 
 export async function POST(request) {
     let body
@@ -31,7 +32,7 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Missing file info (res or filename)' }, { status: 400 })
     }
 
-    const authHeader = request.headers.get('authorization') || (user && user.token ? `Bearer ${user.token}` : null)
+    const authHeader = getAuthHeaderFromRequest(request) || (user && user.token ? `Bearer ${user.token}` : null)
 
     try {
         const payload = { id_user: idUser, filename: resObj.originalName, type: resObj.service, filehash: resObj.storedName }

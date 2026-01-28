@@ -18,7 +18,7 @@ function scheduleDelete(filePath, delay = TTL_MS) {
                 fs.unlinkSync(filePath)
             }
         } catch (err) {
-            console.error(`[PDF Cache] Failed to delete ${filePath}:`, err.message)
+            console.error(`[Cache PDF] Error eliminando ${filePath}:`, err.message)
         }
     }, delay)
 }
@@ -29,7 +29,7 @@ export async function GET(req) {
     const type = searchParams.get('type')
 
     if (!filehash || !type) {
-        console.error(`[PDF Cache] Missing hash or type:`, { hash: filehash, type })
+        console.error(`[Cache PDF] Falta hash o tipo:`, { hash: filehash, type })
         return NextResponse.json({ error: 'Missing hash or type query params' }, { status: 400 })
     }
 
@@ -53,11 +53,12 @@ export async function GET(req) {
             }
             return new Response(stream, { status: 200, headers })
         } catch (err) {
-            console.error(`[PDF Cache] Error reading cached file:`, err.message)
+            console.error(`[Cache PDF] Error al leer archivo en caché:`, err.message)
         }
     }
 
     const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+    const authHeader = getAuthHeaderFromRequest(req)
     const upstreamHash = filehash.endsWith('.pdf') ? filehash : `${filehash}.pdf`
     const upstream = `${API_URL}/file-manager/download/${type}/${upstreamHash}`
 
@@ -66,12 +67,13 @@ export async function GET(req) {
             headers: {
                 'User-Agent': 'NextPDFCache/1.0',
                 'Accept': 'application/pdf',
+                ...(authHeader ? { 'Authorization': authHeader } : {}),
             },
         })
 
         if (!res.ok) {
             const txt = await res.text().catch(() => '')
-            console.error(`[PDF Cache] Upstream error: ${res.status}`, txt)
+            console.error(`[Cache PDF] Error en origen: ${res.status}`, txt)
             return NextResponse.json({ error: 'Upstream fetch failed', status: res.status, details: txt }, { status: 502 })
         }
 
@@ -92,7 +94,7 @@ export async function GET(req) {
         }
         return new Response(buffer, { status: 200, headers })
     } catch (err) {
-        console.error(`[PDF Cache] Error:`, err.message)
+        console.error(`[Cache PDF] Error:`, err.message)
         return NextResponse.json({ error: 'Cache proxy error', details: String(err) }, { status: 500 })
     }
 }

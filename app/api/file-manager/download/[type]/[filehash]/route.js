@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
+import { getAuthHeaderFromRequest } from '../../../../../lib/getAuthHeader'
 
-export async function GET(_req, { params }) {
+export async function GET(request, { params }) {
     const { type, filehash } = params || {}
     if (!type || !filehash || type === 'undefined' || filehash === 'undefined') {
         return NextResponse.json({ error: 'Missing file type or hash' }, { status: 400 })
@@ -10,16 +11,18 @@ export async function GET(_req, { params }) {
     const upstream = `${API_URL}/file-manager/download/${type}/${filehash}`
 
     try {
+        const token = getAuthHeaderFromRequest(request)
         const res = await fetch(upstream, {
             headers: {
                 'User-Agent': 'NextPDFProxy/1.0',
                 'Accept': 'application/pdf',
+                ...(token ? { 'Authorization': token } : {}),
             },
         })
 
         if (!res.ok) {
             const txt = await res.text().catch(() => '')
-            console.error(`[PDF Proxy] Upstream error: ${res.status}`, txt)
+            console.error(`[Proxy PDF] Error en origen: ${res.status}`, txt)
             return NextResponse.json({ error: 'Upstream fetch failed', status: res.status, details: txt }, { status: 502 })
         }
 

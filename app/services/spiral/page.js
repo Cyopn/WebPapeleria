@@ -17,7 +17,7 @@ export default function SpiralPage() {
     const [numPages, setNumPages] = useState(null)
     const [pageNumber, setPageNumber] = useState(1)
     const { showToast } = useToast()
-    function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { } }
+    function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { console.error('[SpiralPage] showToast fallo', e) } }
     const previewLockRef = useRef(false)
     const ANIM_DURATION = 200
     const [quantity, setQuantity] = useState(1)
@@ -49,6 +49,7 @@ export default function SpiralPage() {
         try {
             setupPdfWorker()
         } catch (e) {
+            console.error('[SpiralPage] setupPdfWorker fallo', e)
         }
     }, [])
 
@@ -105,7 +106,7 @@ export default function SpiralPage() {
             try {
                 const user = JSON.parse(localStorage.getItem('user') || '{}')
                 if (user?.token) headers.Authorization = `Bearer ${user.token}`
-            } catch (e) { }
+            } catch (e) { console.error('[SpiralPage] fallo parseando localStorage user', e) }
 
             const res = await fetch('/api/printing-price', {
                 method: 'POST',
@@ -121,11 +122,11 @@ export default function SpiralPage() {
                 setPriceData(data)
             }
         } catch (err) {
-            console.error('calculatePrice error', err)
+            console.error('[SpiralPage] Error al calcular precio', err)
             showToast(err?.message || 'Error calculando precio', { type: 'error' })
             setPriceData(null)
         } finally {
-            try { setPriceLoading(false) } catch (e) { }
+            try { setPriceLoading(false) } catch (e) { console.error('[SpiralPage] setPriceLoading fallo', e) }
         }
     }, [printType, paperSize, br3Selected, rangeValue, bothSides, quantity, ringType, showToast])
     async function handleFileChange(e) {
@@ -156,7 +157,7 @@ export default function SpiralPage() {
                         body = await res.text().catch(() => '')
                     }
                     if (body) msg = `Error al subir archivo: ${body}`
-                    console.error('file-manager error body:', body)
+                    console.error('[SpiralPage] Error en file-manager, body:', body)
                     showToast(msg, { type: 'error' })
                     throw new Error(msg)
                 }
@@ -190,7 +191,7 @@ export default function SpiralPage() {
                         body = await res2.text().catch(() => '')
                     }
                     if (body) msg = `Error registrando archivo: ${body}`
-                    console.error('/api/file error body:', body)
+                    console.error('[SpiralPage] Error en /api/file, body:', body)
                     showToast(msg, { type: 'error' })
                     throw new Error(msg)
                 }
@@ -224,12 +225,12 @@ export default function SpiralPage() {
     function handlePayResult(result) {
         try {
             setPaymentOpen(false)
-            console.log('[SpiralPage] payment result', result)
+            console.log('[SpiralPage] resultado de pago', result)
             const m = result?.method || 'unknown'
             const a = result?.amount ?? (priceData?.totalPrice ?? 0)
             showToast(`Pago recibido: ${m} — $ ${a}`, { type: 'success' })
         } catch (e) {
-            console.error(e)
+            console.error('[SpiralPage] Error inesperado:', e)
         }
     }
 
@@ -263,7 +264,7 @@ export default function SpiralPage() {
                                     <stop offset='0.990385' stopColor='#5B6FD7' stopOpacity='0.62' />
                                 </linearGradient>
                             </defs>
-                            <text x='10%' y='40%' className='text-white italic' fill='white' fontSize='40' fontWeight='bold'>Anillado e impresion</text>
+                            <text x='10%' y='40%' className='text-white italic' fill='white' fontSize='40' fontWeight='bold'>Anillado e impresión</text>
                         </svg>
                         <Image
                             src='/images/bg-services-spiral.png'
@@ -297,16 +298,16 @@ export default function SpiralPage() {
                                 <div className='w-[80%] p-2 text-black grid grid-cols-[repeat(4,1fr)] grid-rows-[1fr] gap-y-[10px]'>
                                     <div className='w-full p-2'>
                                         <div className='w-full text-left py-1'>
-                                            <span>Tipo de impresion</span>
+                                            <span>Tipo de impresión</span>
                                         </div>
                                         <div className='w-full flex gap-[24px] flex-col justify-between'>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
                                                 <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { setPrintType('blanco_negro'); if (lastUpload) calculatePrice(lastUpload, { printType: 'blanco_negro' }) }} />
-                                                <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresion Blanco y Negro</label>
+                                                <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresión Blanco y Negro</label>
                                             </div>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
                                                 <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { setPrintType('color'); if (lastUpload) calculatePrice(lastUpload, { printType: 'color' }) }} />
-                                                <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresion a Color</label>
+                                                <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresión a Color</label>
                                             </div>
                                         </div>
                                         <div className='w-full px-2 pb-2'>
@@ -467,7 +468,7 @@ export default function SpiralPage() {
                                                         <div className='text-sm text-left py-1'>Tinta: <strong>{typeof priceData.breakdownPerSet?.inkCost === 'number' ? (`$ ${priceData.breakdownPerSet.inkCost}`) : '—'}</strong></div>
                                                         <div className='text-sm text-left py-1'>Papel: <strong>{typeof priceData.breakdownPerSet?.paperCost === 'number' ? (`$ ${priceData.breakdownPerSet.paperCost}`) : '—'}</strong></div>
                                                         <div className='text-sm text-left py-1'>Precio por juego: <strong>{(typeof priceData.breakdownPerSet?.inkCost === 'number' && typeof priceData.breakdownPerSet?.paperCost === 'number') ? (`$ ${priceData.breakdownPerSet.inkCost + priceData.breakdownPerSet.paperCost}`) : '—'}</strong></div>
-                                                        <div className='text-sm text-left py-1'>Precio total impresion: <strong>{(typeof priceData.breakdownTotal?.inkCost === 'number' && typeof priceData.breakdownTotal?.paperCost === 'number') ? (`$ ${priceData.breakdownTotal.inkCost + priceData.breakdownTotal.paperCost}`) : '—'}</strong></div>
+                                                        <div className='text-sm text-left py-1'>Precio total impresión: <strong>{(typeof priceData.breakdownTotal?.inkCost === 'number' && typeof priceData.breakdownTotal?.paperCost === 'number') ? (`$ ${priceData.breakdownTotal.inkCost + priceData.breakdownTotal.paperCost}`) : '—'}</strong></div>
                                                     </>
                                                 ) : (
                                                     <div className='text-sm text-left py-2'>Seleccione opciones y suba un archivo para calcular precio.</div>
@@ -495,7 +496,7 @@ export default function SpiralPage() {
                                         onClick={() => {
                                             if (priceLoading) return
                                             if (!priceData) return (showError('Calcula el precio primero'), null)
-                                            console.log('[SpiralPage] opening payment modal, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
+                                            console.log('[SpiralPage] abriendo modal de pago, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
                                             setPaymentOpen(true)
                                         }}
                                         className='text-black text-sm px-10 p-1 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] cursor-pointer'

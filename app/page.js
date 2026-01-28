@@ -9,7 +9,7 @@ export default function HomePage() {
         <div className='absolute left-0 w-[52%] h-full bg-black/85 z-[2] items-center content-center flex justify-center'>
           <div className='flex gap-[20px] items-center content-center justify-center flex-nowrap flex-col h-full w-[80%]'>
             <h1 className='text-5xl font-bold text-white pt-10'>Imprime tu mundo con color, creatividad y calidad</h1>
-            <h3 className='text-4xl font-bold text-white pt-10'>Papeleria con proposito</h3>
+            <h3 className='text-4xl font-bold text-white pt-10'>Papelería con propósito</h3>
             <Link
               href='/products'
               className='text-black text-3xl font-bold px-5 py-2 rounded-full bg-gradient-to-r from-[#7BCE6D] to-[#A8D860] mt-10 inline-block'>

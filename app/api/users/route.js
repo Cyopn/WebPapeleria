@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getAuthHeaderFromRequest } from '@/lib/get_auth_header'
 
 export async function POST(request) {
     try {
@@ -25,13 +26,13 @@ export async function POST(request) {
 export async function GET(request) {
     try {
         const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
-        const BEARER_TOKEN = process.env.BEARER_TOKEN
         const upstream = `${API_URL}/users`
+        const authHeader = getAuthHeaderFromRequest(request)
         const res = await fetch(upstream, {
             method: 'GET', headers: {
                 'Accept': '*/*',
                 'Content-Type': 'application/json; charset=utf-8',
-                'Authorization': `Bearer ${BEARER_TOKEN}`,
+                ...(authHeader ? { 'Authorization': authHeader } : {}),
             }
         })
         const txt = await res.text().catch(() => '')

@@ -133,7 +133,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
 
                     if (!trxId) throw new Error('No se obtuvo id de transacción')
 
-                    try { const trxFull = await req(`/transactions/${trxId}`, 'GET'); console.log('[PaymentModal] fetched trx full', trxFull) } catch (e) { console.warn('[PaymentModal] could not fetch full transaction', String(e)) }
+                    try { const trxFull = await req(`/transactions/${trxId}`, 'GET'); console.log('[PaymentModal] transacción completa obtenida', trxFull) } catch (e) { console.warn('[PaymentModal] no se pudo obtener la transacción completa', String(e)) }
                     setLoading(false)
                     showToast('Pago en efectivo registrado correctamente', { type: 'success' })
                     onPay && onPay({ method: 'cash', amount, transactionId: trxId })

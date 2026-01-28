@@ -10,7 +10,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const { showToast } = useToast()
-  function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { } }
+  function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { console.error('[SigninPage] showToast fallo', e) } }
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromParam = typeof window !== 'undefined' ? searchParams?.get('from') : null

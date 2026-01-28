@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getAuthHeaderFromRequest } from '../../../../lib/get_auth_header'
 
 export async function GET(request, { params }) {
     const { id } = (await params) || {}
@@ -6,7 +7,7 @@ export async function GET(request, { params }) {
 
     try {
         const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
-        const authHeader = request.headers.get('authorization') || null
+        const authHeader = getAuthHeaderFromRequest(request)
         const response = await fetch(`${API_URL}/transactions/${encodeURIComponent(id)}`, {
             method: 'GET',
             headers: {

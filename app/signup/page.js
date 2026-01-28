@@ -13,7 +13,7 @@ export default function SignUpPage() {
     const [confirmPassword, setConfirmPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const { showToast } = useToast()
-    function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { } }
+    function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { console.error('[SignupPage] showToast fallo', e) } }
     const router = useRouter()
 
     async function handleSubmit(e) {

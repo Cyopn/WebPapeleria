@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getAuthHeaderFromRequest } from '@/lib/get_auth_header'
 
 export async function POST(request) {
     let body
@@ -9,7 +10,7 @@ export async function POST(request) {
     }
 
     const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
-    const authHeader = request.headers.get('authorization') || null
+    const authHeader = getAuthHeaderFromRequest(request)
 
     try {
         const response = await fetch(`${API_URL}/transactions`, {
@@ -32,7 +33,7 @@ export async function POST(request) {
 export async function GET(request) {
     try {
         const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
-        const authHeader = request.headers.get('authorization') || null
+        const authHeader = getAuthHeaderFromRequest(request)
         const url = new URL(request.url)
         const search = url.search || ''
 

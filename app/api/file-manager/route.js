@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAuthHeaderFromRequest } from '@/lib/get_auth_header'
 
 export async function POST(request) {
     let body
@@ -6,12 +7,12 @@ export async function POST(request) {
         body = await request.formData()
     } catch (err) {
         const received = request.headers.get('content-type') || ''
-        console.log('file-manager: formData parse failed', String(err), 'content-type:', received)
+        console.log('[FileManagerAPI] file-manager: parseo de formData falló', String(err), 'content-type:', received)
         try {
             const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
-            const authHeader = request.headers.get('authorization') || null
+            const authHeader = getAuthHeaderFromRequest(request)
             const raw = await request.arrayBuffer()
-            console.log('file-manager: forwarding raw body, size bytes =', raw?.byteLength)
+            console.log('[FileManagerAPI] file-manager: reenviando cuerpo raw, tamaño bytes =', raw?.byteLength)
             const forwardHeaders = {
                 'Accept': '*/*',
                 ...(authHeader ? { 'Authorization': authHeader } : {}),
@@ -25,10 +26,10 @@ export async function POST(request) {
             const text = await proxied.text().catch(() => '')
             let data = null
             try { data = JSON.parse(text) } catch (e) { data = null }
-            console.log('file-manager: proxied response status', proxied.status, 'body:', text?.slice(0, 200))
+            console.log('[FileManagerAPI] file-manager: estado de respuesta proxy', proxied.status, 'body:', text?.slice(0, 200))
             return NextResponse.json(data || { error: 'Upstream did not return JSON', rawBodyPreview: text?.slice(0, 200) }, { status: proxied.status })
         } catch (forwardErr) {
-            console.log('file-manager: forwarding failed', String(forwardErr))
+            console.log('[FileManagerAPI] file-manager: reenvío falló', String(forwardErr))
             return NextResponse.json({ error: 'Invalid Content-Type. Expected multipart/form-data or application/x-www-form-urlencoded.', details: String(err), received, forwardError: String(forwardErr) }, { status: 400 })
         }
     }
@@ -44,7 +45,7 @@ export async function POST(request) {
     } else if (incomingUsername) {
         user = { user: { username: String(incomingUsername) } }
     }
-    const authHeader = request.headers.get('authorization') || (user && user.token ? `Bearer ${user.token}` : null)
+    const authHeader = getAuthHeaderFromRequest(request) || (user && user.token ? `Bearer ${user.token}` : null)
     const fd = new FormData()
     const filesField = body.get('files')
     if (!filesField) {
