@@ -11,7 +11,7 @@ export default async function ProductArteWrapper() {
         },
         cache: 'no-store',
     });
-    const data = await res.json(); 0
+    const data = await res.json();
     const merged = (data.products || [])
         .filter(item => item?.item)
         .map(item => ({

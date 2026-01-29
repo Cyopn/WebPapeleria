@@ -595,35 +595,16 @@ export default function PrintPage() {
                                 <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
                                     <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl max-w-[60vw] w-full p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`} style={{ maxHeight: '80vh' }}>
                                         <div className='flex justify-between items-center'>
-                                            <h3 className='text-lg text-black font-semibold'>Vista previa</h3>
-                                            <button onClick={() => setPreviewOpen(false)} className='text-gray-600 cursor-pointer'>Cerrar</button>
+                                            <h3 className='text-lg text-black'>Vista previa</h3>
                                         </div>
                                         <div className='mt-4'>
                                             {lastUpload ? (
                                                 <div className='space-y-3'>
-                                                    <div className='text-sm text-gray-700'>Nombre: <span className='font-medium'>{lastUpload.filename || lastUpload.originalName || lastUpload.name}</span></div>
+                                                    <div className='text-gray-700 text-md'>Nombre: <span className='font-medium'>{lastUpload.filename || lastUpload.originalName || lastUpload.name}</span></div>
                                                     {previewFileUrl ? (
                                                         <div className='mt-3 space-y-3'>
-                                                            <div className='flex items-center gap-3 text-sm text-gray-700'>
-                                                                <button
-                                                                    type='button'
-                                                                    className='px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 cursor-pointer'
-                                                                    onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-                                                                    disabled={pageNumber <= 1}
-                                                                >
-                                                                    Anterior
-                                                                </button>
-                                                                <button
-                                                                    type='button'
-                                                                    className='px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 cursor-pointer'
-                                                                    onClick={() => setPageNumber((p) => (numPages ? Math.min(numPages, p + 1) : p + 1))}
-                                                                    disabled={numPages ? pageNumber >= numPages : false}
-                                                                >
-                                                                    Siguiente
-                                                                </button>
-                                                                <span>Página {pageNumber}{numPages ? ` de ${numPages}` : ''}</span>
-                                                            </div>
-                                                            <div className='border rounded overflow-hidden flex justify-center bg-gray-50'>
+
+                                                            <div className='border rounded overflow-scroll overflow-x-hidden flex justify-center bg-gray-50 max-h-[60vh]'>
                                                                 <Document
                                                                     file={previewFileUrl}
                                                                     onLoadSuccess={({ numPages: n }) => {
@@ -644,7 +625,50 @@ export default function PrintPage() {
                                                     ) : (
                                                         <div className='text-sm text-red-600'>No hay datos suficientes para mostrar la vista previa.</div>
                                                     )}
+                                                    <div className='flex flex-col w-full justify-center gap-3 text-sm text-gray-700'>
+                                                        <div className='w-full flex justify-center'>
+                                                            <button
+                                                                type='button'
+                                                                className='cursor-pointer rotate-180 text-4xl'
+                                                                onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+                                                                disabled={pageNumber <= 1}
+                                                            >
+                                                                <i class="fi fi-sr-angle-small-right"></i>
+                                                            </button>
+                                                            <span className='p-3 pb-1 text-lg'>Página {pageNumber}{numPages ? ` de ${numPages}` : ''}</span>
+                                                            <button
+                                                                type='button'
+                                                                className='cursor-pointer rotate-x-180 text-4xl'
+                                                                onClick={() => setPageNumber((p) => (numPages ? Math.min(numPages, p + 1) : p + 1))}
+                                                                disabled={numPages ? pageNumber >= numPages : false}
+                                                            >
+                                                                <i class="fi fi-sr-angle-small-right"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div className='w-full flex flex-col items-center content-stretch justify-center'>
+                                                            <div className='flex items-center w-full rounded-xl border border-gray-400'>
+                                                                <div className='w-1/2 p-3 items-left flex'>
+                                                                    <label className='text-center text-md px-2'>Precio estimado: </label>
+                                                                    <label className='text-center text-md font-semibold'>{priceData ? ('$ ' + priceData.totalPrice ?? '—') : '$ 0'}</label>
+                                                                </div>
+                                                                <div className='w-1/2 p-3 items-right flex justify-end'>
+                                                                    <button
+                                                                        type='button'
+                                                                        disabled={priceLoading}
+                                                                        onClick={() => {
+                                                                            if (priceLoading) return
+                                                                            if (!priceData) { try { showToast('Carga el archivo primero', { type: 'warn' }) } catch (e) { console.error('[PrintPage] showToast fallo', e) }; return }
+                                                                            console.log('[PrintPage] abriendo modal de pago, priceData:', priceData ? { totalPrice: priceData.totalPrice } : null)
+                                                                            setPaymentOpen(true)
+                                                                        }}
+                                                                        className={`text-black text-sm px-15 p-1 rounded-full bg-gradient-to-r from-[#007BFF] to-[#0872EAA3] ${priceLoading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                                                                    >Aceptar</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
+
                                             ) : (
                                                 <p className='text-sm text-gray-600'>No hay datos de previsualización.</p>
                                             )}
