@@ -6,6 +6,8 @@ import Cropper from 'react-easy-crop'
 import { useToast } from '@/context/toast_context'
 import setupPdfWorker from '@/lib/setup_pdf_worker'
 import PaymentModal from '@/components/payment_modal'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 
 export default function PhotoPage() {
     const [rangeValue, setRangeValue] = useState('');
@@ -19,6 +21,7 @@ export default function PhotoPage() {
     const [cropOpen, setCropOpen] = useState(false)
     const [crop, setCrop] = useState({ x: 0, y: 0 })
     const [zoom, setZoom] = useState(1)
+    const [rotation, setRotation] = useState(0)
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
     const [paperSize, setPaperSize] = useState('ti')
     const [printType, setPrintType] = useState('blanco_negro')
@@ -31,6 +34,17 @@ export default function PhotoPage() {
     const [numPages, setNumPages] = useState(null)
     const [pageNumber, setPageNumber] = useState(1)
     const { showToast } = useToast();
+    const getNextBusinessDay = () => {
+        const today = new Date();
+        let nextDay = new Date(today);
+        nextDay.setDate(today.getDate() + 1);
+        while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
+            nextDay.setDate(nextDay.getDate() + 1);
+        }
+        return nextDay.toISOString().split('T')[0];
+    };
+    const [deliveryDate, setDeliveryDate] = useState(getNextBusinessDay)
+    const [observations, setObservations] = useState('')
 
     function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { } }
     const previewLockRef = useRef(false)
@@ -639,6 +653,30 @@ export default function PhotoPage() {
                                                 </label>
                                             </div>
                                         </div>
+                                        <div className='w-full text-left'>
+                                            <span>Observaciones</span>
+                                        </div>
+                                        <div className='bg-[#BABABA47] w-full rounded-lg'>
+                                            <div className='w-full flex flex-col content-stretch p-1 pl-3'>
+                                                <textarea rows={'4'} placeholder='Observaciones (opcional)' value={observations} onChange={(e) => setObservations(e.target.value)}></textarea>
+                                            </div>
+                                        </div>
+                                        <div className='w-full text-left'>
+                                            <span>Fecha de entrega</span>
+                                        </div>
+                                        <div className='bg-[#BABABA47] w-full rounded-lg'>
+                                            <div className='w-full flex flex-col content-stretch p-1 pl-3'>
+                                                <DatePicker
+                                                    selected={new Date(deliveryDate)}
+                                                    onChange={(date) => setDeliveryDate(date.toISOString().split('T')[0])}
+                                                    filterDate={(date) => date.getDay() !== 0 && date.getDay() !== 6}
+                                                    minDate={new Date(deliveryDate)}
+                                                    dateFormat="yyyy-MM-dd"
+                                                    className="w-full bg-transparent border-none outline-none cursor-pointer"
+                                                />
+                                                <p className='text-xs w-full text-left'>Sujeto a cambios sin previo aviso</p>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className='w-full p-2'>
                                         <div className='w-full text-left'>
@@ -762,7 +800,7 @@ export default function PhotoPage() {
                                 <div onClick={closeCrop} className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/60`}>
                                     <div onClick={(e) => e.stopPropagation()} className='bg-white rounded-xl w-[80vw] max-w-3xl p-4'>
                                         <div className='flex justify-between items-center mb-3'>
-                                            <h3 className='text-lg font-semibold'>Recortar imagen</h3>
+                                            <h3 className='text-lg font-semibold text-black'>Recortar imagen</h3>
                                             <div className='flex gap-2'>
                                                 <button onClick={closeCrop} className='px-3 py-1 rounded bg-gray-200'>Cancelar</button>
                                                 <button onClick={applyCrop} className='px-3 py-1 rounded bg-blue-600 text-white'>Aplicar</button>
@@ -773,15 +811,23 @@ export default function PhotoPage() {
                                                 image={localPreview}
                                                 crop={crop}
                                                 zoom={zoom}
+                                                rotation={rotation}
                                                 aspect={aspect}
                                                 onCropChange={setCrop}
                                                 onZoomChange={setZoom}
+                                                onRotationChange={setRotation}
                                                 onCropComplete={onCropComplete}
                                             />
                                         </div>
                                         <div className='mt-3 flex items-center gap-3'>
-                                            <label className='text-sm'>Zoom</label>
+                                            <label className='text-sm text-black'>Zoom</label>
                                             <input type='range' min={1} max={3} step={0.1} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} />
+                                            <label className='text-sm text-black'>{zoom}</label>
+                                        </div>
+                                        <div className='mt-3 flex items-center gap-3'>
+                                            <label className='text-sm text-black'>Rotación</label>
+                                            <input type='range' min={0} max={360} step={1} value={rotation} onChange={(e) => setRotation(Number(e.target.value))} />
+                                            <label className='text-sm text-black'>{rotation}°</label>
                                         </div>
                                     </div>
                                 </div>
@@ -792,7 +838,7 @@ export default function PhotoPage() {
                                 onClose={() => setPaymentOpen(false)}
                                 amount={priceData?.totalPrice ?? 0}
                                 currency={'MXN'}
-                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity: 1, priceData }}
+                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity: 1, priceData, deliveryDate, observations, photoPaper }}
                                 onPay={(res) => handlePayResult(res)}
                             />
                         </div>

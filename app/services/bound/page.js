@@ -5,6 +5,8 @@ import { Document, Page } from 'react-pdf'
 import { useToast } from '@/context/toast_context'
 import setupPdfWorker from '@/lib/setup_pdf_worker'
 import PaymentModal from '@/components/payment_modal'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 
 export default function BoundPage() {
     const [rangeValue, setRangeValue] = useState('');
@@ -29,6 +31,18 @@ export default function BoundPage() {
     const [priceLoading, setPriceLoading] = useState(false)
     const [uploadLoading, setUploadLoading] = useState(false)
     const [paymentOpen, setPaymentOpen] = useState(false)
+    const getNextBusinessDay = () => {
+        const today = new Date();
+        let nextDay = new Date(today);
+        nextDay.setDate(today.getDate() + 1);
+        while (nextDay.getDay() === 0 || nextDay.getDay() === 6) {
+            nextDay.setDate(nextDay.getDate() + 1);
+        }
+        return nextDay.toISOString().split('T')[0];
+    };
+    const [deliveryDate, setDeliveryDate] = useState(getNextBusinessDay)
+    const [coverColor, setCoverColor] = useState('ro')
+    const [observations, setObservations] = useState('')
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -403,7 +417,7 @@ export default function BoundPage() {
                                             <span>Color de cubierta</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='coverColor' name='coverColor' defaultValue='ro' className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='coverColor' name='coverColor' value={coverColor} onChange={(e) => setCoverColor(e.target.value)} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option value='ro'>Rojo</option>
                                                 <option value='ve'>Verde</option>
                                                 <option value='az'>Azul</option>
@@ -481,6 +495,32 @@ export default function BoundPage() {
                                     </div>
                                     <div className='w-full p-2'>
                                         <div className='w-full text-left'>
+                                            <span>Observaciones</span>
+                                        </div>
+                                        <div className='bg-[#BABABA47] w-full rounded-lg'>
+                                            <div className='w-full flex flex-col content-stretch p-1 pl-3'>
+                                                <textarea rows={'4'} placeholder='Observaciones (opcional)' value={observations} onChange={(e) => setObservations(e.target.value)}></textarea>
+                                            </div>
+                                        </div>
+                                        <div className='w-full text-left'>
+                                            <span>Fecha de entrega</span>
+                                        </div>
+                                        <div className='bg-[#BABABA47] w-full rounded-lg'>
+                                            <div className='w-full flex flex-col content-stretch p-1 pl-3'>
+                                                <DatePicker
+                                                    selected={new Date(deliveryDate)}
+                                                    onChange={(date) => setDeliveryDate(date.toISOString().split('T')[0])}
+                                                    filterDate={(date) => date.getDay() !== 0 && date.getDay() !== 6}
+                                                    minDate={new Date(deliveryDate)}
+                                                    dateFormat="yyyy-MM-dd"
+                                                    className="w-full bg-transparent border-none outline-none cursor-pointer"
+                                                />
+                                                <p className='text-xs w-full text-left'>Sujeto a cambios sin previo aviso</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className='w-full p-2'>
+                                        <div className='w-full text-left'>
                                             <span>Precios de encuadernado</span>
                                         </div>
                                         <div className='bg-[#BABABA47] w-full rounded-lg'>
@@ -501,8 +541,6 @@ export default function BoundPage() {
                                                 )}
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className='w-full p-2'>
                                         <div className='w-full text-left'>
                                             <span>Cálculo de precios</span>
                                         </div>
@@ -615,7 +653,7 @@ export default function BoundPage() {
                                 onClose={() => setPaymentOpen(false)}
                                 amount={priceData?.totalPrice ?? 0}
                                 currency={'MXN'}
-                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData }}
+                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData, deliveryDate, pastaType, boundType, coverColor, observations }}
                                 onPay={(res) => handlePayResult(res)}
                             />
                         </div>
