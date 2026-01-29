@@ -15,7 +15,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
     const ANIM_DURATION = 200
     const lockRef = useRef(false)
     const { showToast } = useToast()
-    const { lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData, cartItems, total, item, deliveryDate, pastaType, boundType, coverColor, observations, photoPaper, docType, bindingType, ringType } = context || {}
+    const { lastUpload, uploads, printType, paperSize, rangeValue, bothSides, quantity, priceData, cartItems, total, item, deliveryDate, pastaType, boundType, coverColor, observations, photoPaper, docType, bindingType, ringType } = context || {}
     const effectiveCartItems = currentCartItems.length > 0 ? currentCartItems : (item ? [item] : [])
     const displayAmount = effectiveCartItems.length > 0 ? effectiveCartItems.reduce((s, it) => s + (Number(it.price) || 0) * (it.qty || 1), 0) : (context.total || amount)
 
@@ -95,118 +95,147 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         return data
                     }
                     const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null
-                    console.log('[PaymentModal] user from localStorage', user)
+                    console.log('[PaymentModal] usuario desde localStorage', user)
                     const userId = user?.user?.id_user ?? user?.user?.id ?? user?.id ?? null
                     const cartItems = effectiveCartItems
                     let details = []
-                    const filename = lastUpload?.filename || lastUpload?.filehash || null
-                    const idFileValue = lastUpload?.id_file ?? lastUpload?.id ?? lastUpload?.fileId ?? null
+                    const filesToUse = Array.isArray(uploads) && uploads.length > 0 ? uploads : (lastUpload ? [lastUpload] : [])
+                    const priceItems = Array.isArray(priceData?.items) ? priceData.items : null
+                    const getItemData = (idx) => priceItems?.[idx]?.data || null
+                    const getBreakdownPerSet = (idx) => getItemData(idx)?.breakdownPerSet || priceData?.breakdownPerSet || {}
+                    const getPerFileTotal = (idx) => {
+                        const data = getItemData(idx)
+                        if (typeof data?.totalPrice === 'number') return Number(data.totalPrice)
+                        if (typeof data?.pricePerSet === 'number') return Number(data.pricePerSet)
+                        const totalValue = Number(priceData?.totalPrice || amount || 0)
+                        return filesToUse.length ? totalValue / filesToUse.length : totalValue
+                    }
 
                     if (photoPaper) {
-                        const printProdPayload = {
-                            type: 'print',
-                            description: filename || 'special_service_photo_print',
-                            price: 0,
-                            id_file: idFileValue,
-                            filename: filename || lastUpload?.filehash || null,
-                            amount: Number(quantity || 1),
-                            type_print: printType,
-                            type_paper: 'bond',
-                            paper_size: "carta",
-                            range: 'all',
-                            both_sides: false,
-                            print_amount: Number(quantity || 1),
-                            observations: '',
-                            status: 'pending',
-                            id_user: userId
+                        for (let i = 0; i < filesToUse.length; i += 1) {
+                            const file = filesToUse[i]
+                            const fileName = file?.filename || file?.filehash || null
+                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
+                            const perFileTotal = getPerFileTotal(i)
+
+                            const printProdPayload = {
+                                type: 'print',
+                                description: fileName || 'special_service_photo_print',
+                                price: 0,
+                                id_file: fileId,
+                                filename: fileName || file?.filehash || null,
+                                amount: Number(quantity || 1),
+                                type_print: printType,
+                                type_paper: 'bond',
+                                paper_size: "carta",
+                                range: 'all',
+                                both_sides: false,
+                                print_amount: Number(quantity || 1),
+                                observations: '',
+                                status: 'pending',
+                                id_user: userId
+                            }
+                            const printProdRes = await req('/products', 'POST', printProdPayload)
+                            const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
+                            if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de fotos')
+                            const specialProdPayload = {
+                                type: 'special_service',
+                                description: 'special__service_photo',
+                                price: Number(perFileTotal || 0),
+                                id_file: fileId,
+                                amount: Number(quantity || 1),
+                                service_type: 'photo',
+                                mode: 'online',
+                                delivery: deliveryDate,
+                                observations: observations || '',
+                                photo_size: paperSize,
+                                paper_type: photoPaper === 'pb' ? 'bright' : photoPaper === 'pm' ? 'matte' : 'satin',
+                                id_print: printProdId,
+                                status: 'pending',
+                                id_user: userId
+                            }
+                            const specialProdRes = await req('/products', 'POST', specialProdPayload)
+                            const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
+                            if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de fotos')
+                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
                         }
-                        const printProdRes = await req('/products', 'POST', printProdPayload)
-                        const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
-                        if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de fotos')
-                        const specialProdPayload = {
-                            type: 'special_service',
-                            description: 'special__service_photo',
-                            price: Number(priceData?.totalPrice || amount || 0),
-                            id_file: idFileValue,
-                            amount: Number(quantity || 1),
-                            service_type: 'photo',
-                            mode: 'online',
-                            delivery: deliveryDate,
-                            observations: observations || '',
-                            photo_size: paperSize,
-                            paper_type: photoPaper === 'pb' ? 'bright' : photoPaper === 'pm' ? 'matte' : 'satin',
-                            id_print: printProdId,
-                            status: 'pending',
-                            id_user: userId
+                    } else if (filesToUse.length && printType && paperSize && !boundType && !docType && !ringType) {
+                        for (let i = 0; i < filesToUse.length; i += 1) {
+                            const file = filesToUse[i]
+                            const fileName = file?.filename || file?.filehash || null
+                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
+                            const perFileTotal = getPerFileTotal(i)
+                            const printProdPayload = {
+                                type: 'print',
+                                description: 'Impresión de documentos',
+                                price: Number(perFileTotal || 0),
+                                id_file: fileId,
+                                amount: Number(quantity || 1),
+                                type_print: printType === 'color' ? 'color' : 'bw',
+                                type_paper: 'bond',
+                                paper_size: paperSize || 'carta',
+                                range: rangeValue || (file?.range || 'all'),
+                                both_sides: !!bothSides,
+                                print_amount: Number(quantity || 1),
+                                observations: observations || '',
+                                status: 'pending',
+                                id_user: userId
+                            }
+                            const printProdRes = await req('/products', 'POST', printProdPayload)
+                            const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
+                            if (!printProdId) throw new Error('No se obtuvo id de producto para impresión')
+                            details.push({ id_product: printProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
                         }
-                        const specialProdRes = await req('/products', 'POST', specialProdPayload)
-                        const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
-                        if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de fotos')
-                        details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(priceData?.totalPrice || amount || 0) })
-                    } else if (lastUpload && printType && paperSize && !boundType && !docType && !ringType) {
-                        const printProdPayload = {
-                            type: 'print',
-                            description: 'Impresión de documentos',
-                            price: Number(priceData?.totalPrice || amount || 0),
-                            id_file: idFileValue,
-                            amount: Number(quantity || 1),
-                            type_print: printType === 'color' ? 'color' : 'bw',
-                            type_paper: 'bond',
-                            paper_size: paperSize || 'carta',
-                            range: rangeValue || (lastUpload?.range || 'all'),
-                            both_sides: !!bothSides,
-                            print_amount: Number(quantity || 1),
-                            observations: observations || '',
-                            status: 'pending',
-                            id_user: userId
-                        }
-                        const printProdRes = await req('/products', 'POST', printProdPayload)
-                        const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
-                        if (!printProdId) throw new Error('No se obtuvo id de producto para impresión')
-                        details.push({ id_product: printProdId, amount: Number(quantity || 1), price: Number(priceData?.totalPrice || amount || 0) })
                     } else if (boundType) {
-                        const printProdPayload = {
-                            type: 'print',
-                            description: filename || 'special_service_bounding_print',
-                            price: Number(priceData?.breakdownPerSet?.inkCost || 0) + Number(priceData?.breakdownPerSet?.paperCost || 0),
-                            id_file: idFileValue,
-                            filename: filename || lastUpload?.filehash || null,
-                            amount: Number(quantity || 1),
-                            type_print: printType || 'digital',
-                            type_paper: 'bond',
-                            paper_size: paperSize || 'carta',
-                            range: rangeValue || (lastUpload?.range || 'all'),
-                            both_sides: !!bothSides,
-                            print_amount: Number(quantity || 1),
-                            observations: '',
-                            status: 'pending',
-                            id_user: userId
+                        for (let i = 0; i < filesToUse.length; i += 1) {
+                            const file = filesToUse[i]
+                            const fileName = file?.filename || file?.filehash || null
+                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
+                            const perSet = getBreakdownPerSet(i)
+                            const perFileTotal = getPerFileTotal(i)
+                            const printProdPayload = {
+                                type: 'print',
+                                description: fileName || 'special_service_bounding_print',
+                                price: Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0),
+                                id_file: fileId,
+                                filename: fileName || file?.filehash || null,
+                                amount: Number(quantity || 1),
+                                type_print: printType || 'digital',
+                                type_paper: 'bond',
+                                paper_size: paperSize || 'carta',
+                                range: rangeValue || (file?.range || 'all'),
+                                both_sides: !!bothSides,
+                                print_amount: Number(quantity || 1),
+                                observations: '',
+                                status: 'pending',
+                                id_user: userId
+                            }
+                            const printProdRes = await req('/products', 'POST', printProdPayload)
+                            const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
+                            if (!printProdId) throw new Error('No se obtuvo id de producto para impresión')
+                            const colorMap = { ro: 'red', ve: 'green', az: 'blue', am: 'yellow' }
+                            const specialProdPayload = {
+                                type: 'special_service',
+                                description: 'special_service_bounding',
+                                price: Number(perSet?.bindingCost || 0) + Number(perSet?.coverCost || 0),
+                                amount: Number(quantity || 1),
+                                service_type: 'enc_imp',
+                                mode: 'online',
+                                delivery: new Date(deliveryDate).getTime(),
+                                observations: observations || '',
+                                cover_type: pastaType === 'p_dura' ? 'hard' : 'soft',
+                                cover_color: colorMap[coverColor] || 'red',
+                                spiral_type: boundType === 'ep' ? 'plastic' : 'wire',
+                                id_print: printProdId,
+                                status: 'pending',
+                                id_file: fileId,
+                                id_user: userId
+                            }
+                            const specialProdRes = await req('/products', 'POST', specialProdPayload)
+                            const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
+                            if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial')
+                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
                         }
-                        const printProdRes = await req('/products', 'POST', printProdPayload)
-                        const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
-                        if (!printProdId) throw new Error('No se obtuvo id de producto para impresión')
-                        const colorMap = { ro: 'red', ve: 'green', az: 'blue', am: 'yellow' }
-                        const specialProdPayload = {
-                            type: 'special_service',
-                            description: 'special_service_bounding',
-                            price: Number(priceData?.breakdownPerSet?.bindingCost || 0) + Number(priceData?.breakdownPerSet?.coverCost || 0),
-                            amount: Number(quantity || 1),
-                            service_type: 'enc_imp',
-                            mode: 'online',
-                            delivery: new Date(deliveryDate).getTime(),
-                            observations: observations || '',
-                            cover_type: pastaType === 'p_dura' ? 'hard' : 'soft',
-                            cover_color: colorMap[coverColor] || 'red',
-                            spiral_type: boundType === 'ep' ? 'plastic' : 'wire',
-                            id_print: printProdId,
-                            status: 'pending',
-                            id_file: idFileValue,
-                            id_user: userId
-                        }
-                        const specialProdRes = await req('/products', 'POST', specialProdPayload)
-                        const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
-                        if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial')
-                        details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(priceData?.totalPrice || amount || 0) })
                     } else if (docType) {
                         const mapDoc = {
                             te: 'tesis',
@@ -214,84 +243,97 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             re: 'reporte',
                             ot: 'otro'
                         }
-                        const printProdPayload = {
-                            type: 'print',
-                            description: filename || 'special_service_docs_print',
-                            price: 0,
-                            id_file: idFileValue,
-                            filename: filename || lastUpload?.filehash || null,
-                            amount: Number(quantity || 1),
-                            type_print: printType || 'digital',
-                            type_paper: 'bond',
-                            paper_size: paperSize || 'carta',
-                            range: rangeValue || (lastUpload?.range || 'all'),
-                            both_sides: !!bothSides,
-                            print_amount: Number(quantity || 1),
-                            observations: '',
-                            status: 'pending',
-                            id_user: userId
+                        for (let i = 0; i < filesToUse.length; i += 1) {
+                            const file = filesToUse[i]
+                            const fileName = file?.filename || file?.filehash || null
+                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
+                            const perFileTotal = getPerFileTotal(i)
+                            const printProdPayload = {
+                                type: 'print',
+                                description: fileName || 'special_service_docs_print',
+                                price: 0,
+                                id_file: fileId,
+                                filename: fileName || file?.filehash || null,
+                                amount: Number(quantity || 1),
+                                type_print: printType || 'digital',
+                                type_paper: 'bond',
+                                paper_size: paperSize || 'carta',
+                                range: rangeValue || (file?.range || 'all'),
+                                both_sides: !!bothSides,
+                                print_amount: Number(quantity || 1),
+                                observations: '',
+                                status: 'pending',
+                                id_user: userId
+                            }
+                            const printProdRes = await req('/products', 'POST', printProdPayload)
+                            const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
+                            if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de documentos')
+                            const specialProdPayload = {
+                                type: 'special_service',
+                                description: 'special_service_docs',
+                                price: Number(perFileTotal || 0),
+                                service_type: 'doc_esp',
+                                mode: 'online',
+                                delivery: deliveryDate,
+                                id_file: fileId,
+                                observations: observations || '',
+                                document_type: mapDoc[docType] || 'otro',
+                                binding_type: bindingType,
+                                id_print: printProdId,
+                                status: 'pending',
+                                id_user: userId
+                            }
+                            const specialProdRes = await req('/products', 'POST', specialProdPayload)
+                            const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
+                            if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de documentos')
+                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
                         }
-                        const printProdRes = await req('/products', 'POST', printProdPayload)
-                        const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
-                        if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de documentos')
-                        const specialProdPayload = {
-                            type: 'special_service',
-                            description: 'special_service_docs',
-                            price: Number(priceData?.totalPrice || amount || 0),
-                            service_type: 'doc_esp',
-                            mode: 'online',
-                            delivery: deliveryDate,
-                            id_file: idFileValue,
-                            observations: observations || '',
-                            document_type: mapDoc[docType] || 'otro',
-                            binding_type: bindingType,
-                            id_print: printProdId,
-                            status: 'pending',
-                            id_user: userId
-                        }
-                        const specialProdRes = await req('/products', 'POST', specialProdPayload)
-                        const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
-                        if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de documentos')
-                        details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(priceData?.totalPrice || amount || 0) })
                     } else if (ringType) {
-                        const printProdPayload = {
-                            type: 'print',
-                            description: filename || 'special_service_spiral_print',
-                            price: Number(priceData?.breakdownPerSet?.inkCost || 0) + Number(priceData?.breakdownPerSet?.paperCost || 0),
-                            id_file: idFileValue,
-                            filename: filename || lastUpload?.filehash || null,
-                            amount: Number(quantity || 1),
-                            type_print: printType || 'digital',
-                            type_paper: 'bond',
-                            paper_size: paperSize || 'carta',
-                            range: rangeValue || (lastUpload?.range || 'all'),
-                            both_sides: !!bothSides,
-                            print_amount: Number(quantity || 1),
-                            observations: '',
-                            status: 'pending',
-                            id_user: userId
+                        for (let i = 0; i < filesToUse.length; i += 1) {
+                            const file = filesToUse[i]
+                            const fileName = file?.filename || file?.filehash || null
+                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
+                            const perSet = getBreakdownPerSet(i)
+                            const perFileTotal = getPerFileTotal(i)
+                            const printProdPayload = {
+                                type: 'print',
+                                description: fileName || 'special_service_spiral_print',
+                                price: Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0),
+                                id_file: fileId,
+                                filename: fileName || file?.filehash || null,
+                                amount: Number(quantity || 1),
+                                type_print: printType || 'digital',
+                                type_paper: 'bond',
+                                paper_size: paperSize || 'carta',
+                                range: rangeValue || (file?.range || 'all'),
+                                both_sides: !!bothSides,
+                                print_amount: Number(quantity || 1),
+                                observations: '',
+                                status: 'pending',
+                                id_user: userId
+                            }
+                            const printProdRes = await req('/products', 'POST', printProdPayload)
+                            const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
+                            if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de anillado')
+                            const specialProdPayload = {
+                                type: 'special_service',
+                                description: 'Anillado de documentos',
+                                price: Number(perSet?.ringCost || 0),
+                                service_type: 'ani_imp',
+                                mode: 'online',
+                                delivery: deliveryDate,
+                                observations: observations || '',
+                                spiral_type: ringType === 'ep' ? 'stapled' : 'glued',
+                                id_print: printProdId,
+                                status: 'pending',
+                                id_file: fileId,
+                                id_user: userId
+                            }
+                            const specialProdRes = await req('/products', 'POST', specialProdPayload)
+                            const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
+                            if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de anillado')
+                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
                         }
-                        const printProdRes = await req('/products', 'POST', printProdPayload)
-                        const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
-                        if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de anillado')
-                        const specialProdPayload = {
-                            type: 'special_service',
-                            description: 'Anillado de documentos',
-                            price: Number(priceData?.breakdownPerSet?.ringCost || 0),
-                            service_type: 'ani_imp',
-                            mode: 'online',
-                            delivery: deliveryDate,
-                            observations: observations || '',
-                            spiral_type: ringType === 'ep' ? 'stapled' : 'glued',
-                            id_print: printProdId,
-                            status: 'pending',
-                            id_file: idFileValue,
-                            id_user: userId
-                        }
-                        const specialProdRes = await req('/products', 'POST', specialProdPayload)
-                        const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
-                        if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de anillado')
-                        details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(priceData?.totalPrice || amount || 0) })
                     } else if (cartItems.length > 0) {
                         for (const it of cartItems) {
                             details.push({ id_product: it.id, amount: Number(it.qty || 1), price: Number(it.price || 0) })
@@ -299,7 +341,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                     } else {
                         throw new Error('No hay items para procesar el pago')
                     }
-                    console.log('[PaymentModal] userId', userId, 'details', details)
+                    console.log('[PaymentModal] id de usuario', userId, 'detalles', details)
                     const trxPayload = {
                         type: 'compra',
                         date: new Date().toISOString(),

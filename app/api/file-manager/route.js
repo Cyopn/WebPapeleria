@@ -12,7 +12,7 @@ export async function POST(request) {
             const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
             const authHeader = getAuthHeaderFromRequest(request)
             const raw = await request.arrayBuffer()
-            console.log('[FileManagerAPI] file-manager: reenviando cuerpo raw, tamaño bytes =', raw?.byteLength)
+            console.log('[FileManagerAPI] file-manager: reenviando cuerpo sin procesar, tamaño en bytes =', raw?.byteLength)
             const forwardHeaders = {
                 'Accept': '*/*',
                 ...(authHeader ? { 'Authorization': authHeader } : {}),
@@ -47,11 +47,13 @@ export async function POST(request) {
     }
     const authHeader = getAuthHeaderFromRequest(request) || (user && user.token ? `Bearer ${user.token}` : null)
     const fd = new FormData()
-    const filesField = body.get('files')
-    if (!filesField) {
+    const filesField = body.getAll('files')
+    if (!filesField || filesField.length === 0) {
         return NextResponse.json({ error: 'No files field in form data' }, { status: 400 })
     }
-    fd.append('files', filesField)
+    for (const file of filesField) {
+        fd.append('files', file)
+    }
     fd.append('username', (user && user.user && user.user.username) ? user.user.username : '')
 
     const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'

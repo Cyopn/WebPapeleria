@@ -42,8 +42,7 @@ export async function POST(request) {
     }
   }
 
-  const payload = {
-    filename: body.filename || body.filehash || body.storedName || null,
+  const basePayload = {
     colorModes: body.colorModes || body.color || (body.printType === 'color' ? 'color' : 'bw') || 'bw',
     paperSizes: body.paperSizes || body.paperSize || body.paper || 'carta',
     ranges: body.ranges || (body.br3Selected ? 'all' : (body.rangeValue || 'all')) || 'all',
@@ -58,18 +57,48 @@ export async function POST(request) {
     bindingType: body.bindingType || null,
   }
 
-  if (!payload.filename) {
+  const normalizeList = (input) => {
+    if (!input) return []
+    if (Array.isArray(input)) return input
+    return [input]
+  }
+
+  const fileObjects = normalizeList(body.files || body.fileList || body.items)
+  const filenameInput = body.filename || body.filehash || body.storedName || null
+  const filenameList = Array.isArray(filenameInput) ? filenameInput : (filenameInput ? [filenameInput] : [])
+  const derivedFilenameList = fileObjects
+    .map((file) => {
+      if (typeof file === 'string') return file
+      return file?.filename || file?.filehash || file?.storedName || file?.name || null
+    })
+    .filter(Boolean)
+
+  const finalFilenameList = filenameList.length ? filenameList : derivedFilenameList
+
+  if (!finalFilenameList.length) {
     return NextResponse.json({ error: 'Missing filename/filehash in request' }, { status: 400 })
   }
 
   try {
+    const headers = {
+      'Accept': '*/*',
+      'Content-Type': 'application/json; charset=utf-8',
+      ...(authHeader ? { 'Authorization': authHeader } : {}),
+    }
+
+    const payload = {
+      ...basePayload,
+      ...(finalFilenameList.length > 1 ? { filename: finalFilenameList } : { filename: finalFilenameList[0] }),
+    }
+
+    if (!payload.service && fileObjects.length > 0) {
+      const first = fileObjects[0]
+      if (typeof first !== 'string') payload.service = first?.service || first?.type || basePayload.service
+    }
+
     const res = await fetch(`${API_URL}/printing-price`, {
       method: 'POST',
-      headers: {
-        'Accept': '*/*',
-        'Content-Type': 'application/json; charset=utf-8',
-        ...(authHeader ? { 'Authorization': authHeader } : {}),
-      },
+      headers,
       body: JSON.stringify(payload),
     })
 

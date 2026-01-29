@@ -13,6 +13,8 @@ export default function BoundPage() {
     const [br3Selected, setBr3Selected] = useState(true);
     const [printType, setPrintType] = useState('blanco_negro');
     const [lastUpload, setLastUpload] = useState(null)
+    const [uploads, setUploads] = useState([])
+    const [selectedUploadIndex, setSelectedUploadIndex] = useState(0)
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewMounted, setPreviewMounted] = useState(false)
     const [previewVisible, setPreviewVisible] = useState(false)
@@ -31,6 +33,43 @@ export default function BoundPage() {
     const [priceLoading, setPriceLoading] = useState(false)
     const [uploadLoading, setUploadLoading] = useState(false)
     const [paymentOpen, setPaymentOpen] = useState(false)
+
+    function normalizePriceData(data) {
+        if (!data) return null
+        if (Array.isArray(data)) {
+            const items = data.map((d) => ({ data: d }))
+            let totalPrice = 0
+            let pages = 0
+            let sheets = 0
+            let sets = 0
+            const breakdownPerSet = {}
+            const breakdownTotal = {}
+            data.forEach((d) => {
+                if (typeof d?.totalPrice === 'number') totalPrice += d.totalPrice
+                if (typeof d?.pages === 'number') pages += d.pages
+                if (typeof d?.sheets === 'number') sheets += d.sheets
+                if (typeof d?.sets === 'number') sets += d.sets
+                const perSet = d?.breakdownPerSet || {}
+                const total = d?.breakdownTotal || {}
+                Object.entries(perSet).forEach(([k, v]) => {
+                    if (typeof v === 'number') breakdownPerSet[k] = (breakdownPerSet[k] || 0) + v
+                })
+                Object.entries(total).forEach(([k, v]) => {
+                    if (typeof v === 'number') breakdownTotal[k] = (breakdownTotal[k] || 0) + v
+                })
+            })
+            return {
+                totalPrice,
+                pages: pages || null,
+                sheets: sheets || null,
+                sets: sets || null,
+                breakdownPerSet: Object.keys(breakdownPerSet).length ? breakdownPerSet : null,
+                breakdownTotal: Object.keys(breakdownTotal).length ? breakdownTotal : null,
+                items,
+            }
+        }
+        return { ...data, items: data.items || [{ data }] }
+    }
     const getNextBusinessDay = () => {
         const today = new Date();
         let nextDay = new Date(today);
@@ -91,13 +130,13 @@ export default function BoundPage() {
     }, [previewOpen, previewMounted])
     async function handleFileChange(e) {
         e.preventDefault();
-        const file = e.target.files[0]
-        if (file) {
+        const files = Array.from(e.target.files || [])
+        if (files.length > 0) {
             setUploadLoading(true)
             const user = JSON.parse(localStorage.getItem('user')) || {}
             const token = user?.token
             const fd = new FormData();
-            fd.append('files', file);
+            files.forEach((file) => fd.append('files', file))
             fd.append('username', user?.user?.username || '');
 
             try {
@@ -122,13 +161,10 @@ export default function BoundPage() {
                     throw new Error(msg)
                 }
 
-                const response = (await res.json())[0]
-
+                const responseList = await res.json()
                 const payload = {
                     id_user: user?.user?.id_user || user?.user?.id || 1,
-                    filename: response.originalName,
-                    type: response.service,
-                    filehash: response.storedName,
+                    resList: responseList,
                 }
 
                 const res2 = await fetch('/api/file', {
@@ -157,14 +193,58 @@ export default function BoundPage() {
                 }
 
                 const final = await res2.json().catch(() => null)
-                setLastUpload(final || payload)
-                showToast('Archivo subido correctamente', { type: 'success' })
+                const items = Array.isArray(final?.items) ? final.items : []
+                const savedList = items.length > 0
+                    ? items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+                    : (Array.isArray(responseList) ? responseList.map((r) => ({
+                        filename: r.originalName,
+                        type: r.service,
+                        filehash: r.storedName,
+                    })) : [])
+
+                setUploads((prev) => {
+                    const merged = [...prev, ...savedList]
+                    if (merged.length > 0) {
+                        const lastIdx = merged.length - 1
+                        setSelectedUploadIndex(lastIdx)
+                        setLastUpload(merged[lastIdx])
+                        try { calculatePrice(merged) } catch (err) { console.error('[BoundPage] calculatePrice fallo', err) }
+                    }
+                    return merged
+                })
+                showToast(files.length > 1 ? 'Archivos subidos correctamente' : 'Archivo subido correctamente', { type: 'success' })
             } catch (err) {
                 showError(err.message)
             } finally {
                 setUploadLoading(false)
             }
         }
+        try { e.target.value = '' } catch (e) { }
+    }
+
+    function selectUpload(idx) {
+        const selected = uploads[idx]
+        if (!selected) return
+        setSelectedUploadIndex(idx)
+        setLastUpload(selected)
+        setPageNumber(1)
+    }
+
+    function removeUpload(idx) {
+        setUploads((prev) => {
+            const next = prev.filter((_, i) => i !== idx)
+            if (!next.length) {
+                setSelectedUploadIndex(0)
+                setLastUpload(null)
+                setPriceData(null)
+                return next
+            }
+            const nextIndex = Math.min(selectedUploadIndex, next.length - 1)
+            setSelectedUploadIndex(nextIndex)
+            setLastUpload(next[nextIndex])
+            try { calculatePrice(next) } catch (err) { console.error('[BoundPage] calculatePrice fallo', err) }
+            return next
+        })
     }
 
     const previewFileUrl = useMemo(() => {
@@ -179,8 +259,14 @@ export default function BoundPage() {
 
     const calculatePrice = useCallback(async (uploadInfo, overrides = {}) => {
         if (!uploadInfo) return
-        const filename = uploadInfo.filehash || uploadInfo.storedName || uploadInfo.filename
-        if (!filename) return
+        const list = Array.isArray(uploadInfo) ? uploadInfo : [uploadInfo]
+        const filesPayload = list
+            .map((u) => ({
+                filename: u?.filehash || u?.storedName || u?.filename,
+                service: u?.type || u?.service || 'file'
+            }))
+            .filter((u) => Boolean(u.filename))
+        if (filesPayload.length === 0) return
 
         const pt = overrides.printType ?? printType
         const ps = overrides.paperSize ?? paperSize
@@ -191,13 +277,14 @@ export default function BoundPage() {
         const pasta = overrides.pastaType ?? pastaType
         const btype = overrides.boundType ?? boundType
 
+        const filenames = filesPayload.map((f) => f.filename)
         const payload = {
-            filename: filename,
+            filename: filenames.length > 1 ? filenames : filenames[0],
+            service: filesPayload[0]?.service || 'file',
             colorModes: pt === 'color' ? 'color' : 'bw',
             paperSizes: ps || 'carta',
             ranges: br3 ? 'all' : (rv || 'all'),
             bothSides: !!bs,
-            service: uploadInfo.type || uploadInfo.service || 'file',
             sets: Number(qty || 1),
             type: 'bound',
             coverType: pasta === 'p_dura' ? 'dura' : 'blanda',
@@ -210,7 +297,7 @@ export default function BoundPage() {
             try {
                 const user = JSON.parse(localStorage.getItem('user') || '{}')
                 if (user?.token) headers.Authorization = `Bearer ${user.token}`
-            } catch (e) { console.error('[BoundPage] fallo parseando localStorage user', e) }
+            } catch (e) { console.error('[BoundPage] fallo parseando usuario en localStorage', e) }
 
             const res = await fetch('/api/printing-price', {
                 method: 'POST',
@@ -224,7 +311,7 @@ export default function BoundPage() {
                 setPriceData(null)
             } else {
                 console.log('[BoundPage] Datos de cálculo de precio', data)
-                setPriceData(data)
+                setPriceData(normalizePriceData(data))
             }
         } catch (err) {
             console.error('[BoundPage] Error al calcular precio', err)
@@ -236,10 +323,10 @@ export default function BoundPage() {
     }, [printType, paperSize, br3Selected, rangeValue, bothSides, quantity, pastaType, boundType, showToast])
 
     useEffect(() => {
-        if (!lastUpload) return
-        const t = setTimeout(() => calculatePrice(lastUpload), 250)
+        if (!uploads.length) return
+        const t = setTimeout(() => calculatePrice(uploads), 250)
         return () => clearTimeout(t)
-    }, [lastUpload, calculatePrice])
+    }, [uploads, calculatePrice])
 
     function handlePayResult(result) {
         try {
@@ -306,8 +393,37 @@ export default function BoundPage() {
                                                 </span>
                                             </div>
                                         </label>
-                                        <input id='file-upload' type='file' accept='application/pdf' onChange={handleFileChange} className='hidden' />
+                                        <input id='file-upload' type='file' multiple accept='application/pdf' onChange={handleFileChange} className='hidden' />
                                     </div>
+                                    {uploads.length > 0 && (
+                                        <div className='mt-3 text-sm text-gray-700 flex flex-col items-center gap-2'>
+                                            <div>Archivos cargados: {uploads.length}</div>
+                                            <div className='flex flex-wrap gap-2 justify-center'>
+                                                {uploads.map((u, idx) => (
+                                                    <div
+                                                        key={`${u.filehash || u.filename || 'file'}-${idx}`}
+                                                        className={`inline-flex items-center rounded-full border ${idx === selectedUploadIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-700 border-gray-300'}`}
+                                                    >
+                                                        <button
+                                                            type='button'
+                                                            onClick={() => selectUpload(idx)}
+                                                            className='px-3 py-1 cursor-pointer'
+                                                        >
+                                                            {u.filename || u.originalName || u.name || `Archivo ${idx + 1}`}
+                                                        </button>
+                                                        <button
+                                                            type='button'
+                                                            aria-label='Quitar archivo'
+                                                            onClick={() => removeUpload(idx)}
+                                                            className={`px-2 py-1 border-l ${idx === selectedUploadIndex ? 'border-blue-300 text-white' : 'border-gray-300 text-gray-600'} hover:text-red-600 cursor-pointer`}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className='w-[80%] p-2 text-black grid grid-cols-[repeat(4,1fr)] grid-rows-[1fr] gap-y-[10px]'>
                                     <div className='w-full p-2'>
@@ -325,7 +441,7 @@ export default function BoundPage() {
                                                     checked={printType === 'blanco_negro'}
                                                     onChange={() => {
                                                         setPrintType('blanco_negro')
-                                                        if (lastUpload) calculatePrice(lastUpload, { printType: 'blanco_negro' })
+                                                        if (uploads.length) calculatePrice(uploads, { printType: 'blanco_negro' })
                                                     }}
                                                 />
                                                 <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresión Blanco y Negro</label>
@@ -340,7 +456,7 @@ export default function BoundPage() {
                                                     checked={printType === 'color'}
                                                     onChange={() => {
                                                         setPrintType('color')
-                                                        if (lastUpload) calculatePrice(lastUpload, { printType: 'color' })
+                                                        if (uploads.length) calculatePrice(uploads, { printType: 'color' })
                                                     }}
                                                 />
                                                 <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresión a Color</label>
@@ -362,7 +478,7 @@ export default function BoundPage() {
                                                         const v = true
                                                         setBr3Selected(v);
                                                         setRangeValue('');
-                                                        if (lastUpload) calculatePrice(lastUpload, { br3Selected: v, rangeValue: '' });
+                                                        if (uploads.length) calculatePrice(uploads, { br3Selected: v, rangeValue: '' });
                                                     }}
                                                 />
                                                 <label htmlFor='br3' className='w-full h-full  text-left pl-2'>Todas</label>
@@ -377,7 +493,7 @@ export default function BoundPage() {
                                                         const v = e.target.value
                                                         setRangeValue(v);
                                                         if (br3Selected) setBr3Selected(false);
-                                                        if (lastUpload) calculatePrice(lastUpload, { br3Selected: false, rangeValue: v });
+                                                        if (uploads.length) calculatePrice(uploads, { br3Selected: false, rangeValue: v });
                                                     }}
                                                     className='bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-1 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-300 shadow-sm focus:shadow'
                                                     placeholder='1, 3-6'
@@ -387,7 +503,7 @@ export default function BoundPage() {
                                                 <span>Tamaño de hoja</span>
                                             </div>
                                             <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                                <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (lastUpload) calculatePrice(lastUpload, { paperSize: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                                <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (uploads.length) calculatePrice(uploads, { paperSize: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                     <option value='carta'>Carta</option>
                                                     <option value='oficio'>Oficio</option>
                                                 </select>
@@ -396,7 +512,7 @@ export default function BoundPage() {
                                                 <span>Tipo de pasta</span>
                                             </div>
                                             <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                                <select id='pasta' name='pasta' value={pastaType} onChange={(e) => { const v = e.target.value; setPastaType(v); if (lastUpload) calculatePrice(lastUpload, { pastaType: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                                <select id='pasta' name='pasta' value={pastaType} onChange={(e) => { const v = e.target.value; setPastaType(v); if (uploads.length) calculatePrice(uploads, { pastaType: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                     <option value='p_dura'>Pasta dura</option>
                                                     <option value='p_blanda'>Pasta blanda</option>
                                                 </select>
@@ -408,7 +524,7 @@ export default function BoundPage() {
                                             <span>Imprimir por:</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='printSide' name='printSide' value={bothSides ? 'ac' : 'oc'} onChange={(e) => { const v = e.target.value === 'ac'; setBothSides(v); if (lastUpload) calculatePrice(lastUpload, { bothSides: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='printSide' name='printSide' value={bothSides ? 'ac' : 'oc'} onChange={(e) => { const v = e.target.value === 'ac'; setBothSides(v); if (uploads.length) calculatePrice(uploads, { bothSides: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option value='oc'>Una cara</option>
                                                 <option value='ac'>Ambas caras</option>
                                             </select>
@@ -447,7 +563,7 @@ export default function BoundPage() {
                                                         const v = parseInt(e.target.value || '1', 10)
                                                         const nv = isNaN(v) ? 1 : Math.max(1, v)
                                                         setQuantity(nv)
-                                                        if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                        if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                     }}
                                                     className='w-full border rounded-lg block p-2.5 pl-4 pr-12 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500 no-spin'
                                                 />
@@ -458,7 +574,7 @@ export default function BoundPage() {
                                                             e.preventDefault()
                                                             const nv = Math.max(1, quantity - 1)
                                                             setQuantity(nv)
-                                                            if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                            if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                         }}
                                                         className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer'
                                                         aria-label='Disminuir cantidad'
@@ -473,7 +589,7 @@ export default function BoundPage() {
                                                             e.preventDefault()
                                                             const nv = quantity + 1
                                                             setQuantity(nv)
-                                                            if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                            if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                         }}
                                                         className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer'
                                                         aria-label='Aumentar cantidad'
@@ -487,7 +603,7 @@ export default function BoundPage() {
                                             <span>Tipo de encuadernado</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='bound' name='bound' value={boundType} onChange={(e) => { const v = e.target.value; setBoundType(v); if (lastUpload) calculatePrice(lastUpload, { boundType: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='bound' name='bound' value={boundType} onChange={(e) => { const v = e.target.value; setBoundType(v); if (uploads.length) calculatePrice(uploads, { boundType: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option value='ep'>Espiral plastico</option>
                                                 <option value='en'>Encolada</option>
                                             </select>
@@ -653,7 +769,7 @@ export default function BoundPage() {
                                 onClose={() => setPaymentOpen(false)}
                                 amount={priceData?.totalPrice ?? 0}
                                 currency={'MXN'}
-                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData, deliveryDate, pastaType, boundType, coverColor, observations }}
+                                context={{ lastUpload, uploads, printType, paperSize, rangeValue, bothSides, quantity, priceData, deliveryDate, pastaType, boundType, coverColor, observations }}
                                 onPay={(res) => handlePayResult(res)}
                             />
                         </div>

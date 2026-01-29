@@ -48,8 +48,6 @@ export default function SlideMenu({ open, onClose }) {
 
     useEffect(() => {
         if (open) {
-            // Si el usuario por defecto (id:1) está activo, no abrir el menú;
-            // mostrar solo el toast y pedir el cierre al padre.
             try {
                 if (typeof window !== 'undefined') {
                     const raw = localStorage.getItem('user')
@@ -65,7 +63,6 @@ export default function SlideMenu({ open, onClose }) {
                     }
                 }
             } catch (e) {
-                // ignore and proceed to lock
             }
             lockBody()
         } else {
@@ -75,9 +72,6 @@ export default function SlideMenu({ open, onClose }) {
             if (lockRef.current) unlockBody()
         }
     }, [open, onClose, showToast])
-
-    // userData is initialized lazily from localStorage to avoid
-    // calling setState synchronously inside an effect (cascading renders).
 
     function handleLogout(e) {
         e?.stopPropagation()

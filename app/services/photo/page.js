@@ -13,6 +13,8 @@ export default function PhotoPage() {
     const [rangeValue, setRangeValue] = useState('');
     const [bothSides, setBothSides] = useState(false)
     const [lastUpload, setLastUpload] = useState(null)
+    const [uploads, setUploads] = useState([])
+    const [selectedUploadIndex, setSelectedUploadIndex] = useState(0)
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewMounted, setPreviewMounted] = useState(false)
     const [previewVisible, setPreviewVisible] = useState(false)
@@ -100,9 +102,19 @@ export default function PhotoPage() {
 
     function handleFileChange(e) {
         e.preventDefault();
-        const file = e.target.files?.[0]
-        if (!file) return
+        const files = Array.from(e.target.files || [])
+        if (files.length === 0) return
 
+        if (files.length > 1) {
+            try { if (localPreview) URL.revokeObjectURL(localPreview) } catch (e) { }
+            setLocalPreview(null)
+            setCropOpen(false)
+            createAndStorePdfsFromFiles(files)
+            try { e.target.value = '' } catch (e) { }
+            return
+        }
+
+        const file = files[0]
         try {
             try { if (localPreview) URL.revokeObjectURL(localPreview) } catch (e) { }
             const url = URL.createObjectURL(file)
@@ -111,6 +123,24 @@ export default function PhotoPage() {
             console.error('[PhotoPage] error al generar la vista previa', err)
             showError('No se pudo generar la vista previa')
         }
+        try { e.target.value = '' } catch (e) { }
+    }
+
+    function removeUpload(idx) {
+        setUploads((prev) => {
+            const next = prev.filter((_, i) => i !== idx)
+            if (!next.length) {
+                setSelectedUploadIndex(0)
+                setLastUpload(null)
+                setPriceData(null)
+                return next
+            }
+            const nextIndex = Math.min(selectedUploadIndex, next.length - 1)
+            setSelectedUploadIndex(nextIndex)
+            setLastUpload(next[nextIndex])
+            try { calculatePrice(next) } catch (e) { }
+            return next
+        })
     }
 
     useEffect(() => {
@@ -260,6 +290,114 @@ export default function PhotoPage() {
         }
     }
 
+    async function createAndStorePdfsFromFiles(files, opts = {}) {
+        if (!files || files.length === 0) return
+        const genQty = typeof opts.quantity === 'number' ? opts.quantity : quantity
+        const genPaperSize = opts.paperSize || paperSize
+        setUploadLoading(true)
+        try {
+            const pdfFiles = []
+            for (const file of files) {
+                const arrayBuffer = await file.arrayBuffer()
+                const base64 = `data:${file.type};base64,${Buffer.from(arrayBuffer).toString('base64')}`
+                const gen = await fetch('/api/generate-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageBase64: base64, paperSize: genPaperSize, quantity: genQty }),
+                })
+                if (!gen.ok) {
+                    const txt = await gen.text().catch(() => '')
+                    console.error('[PhotoPage] falló la generación del PDF', gen.status, txt)
+                    continue
+                }
+                const pdfBlob = await gen.blob()
+                const filename = `photo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}.pdf`
+                pdfFiles.push(new File([pdfBlob], filename, { type: 'application/pdf' }))
+            }
+
+            if (pdfFiles.length === 0) return
+
+            const user = (() => { try { return JSON.parse(localStorage.getItem('user')) || {} } catch (e) { return {} } })()
+            const token = user?.token
+            const fd = new FormData()
+            pdfFiles.forEach((file) => fd.append('files', file))
+            fd.append('username', user?.user?.username || '')
+
+            const upload = await fetch('/api/file-manager', {
+                method: 'POST',
+                headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                body: fd,
+            })
+
+            if (!upload.ok) {
+                let body = ''
+                try {
+                    const data = await upload.json()
+                    body = data?.message || data?.error || JSON.stringify(data)
+                } catch (jsonErr) {
+                    body = await upload.text().catch(() => '')
+                }
+                console.error('[PhotoPage] Error en file-manager, body:', body)
+                return
+            }
+
+            const responseList = await upload.json()
+
+            const payload = {
+                id_user: user?.user?.id_user || user?.user?.id || 1,
+                resList: responseList,
+            }
+
+            const reg = await fetch('/api/file', {
+                method: 'POST',
+                headers: {
+                    'Accept': '*/*',
+                    'Content-Type': 'application/json; charset=utf-8',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(payload),
+            })
+
+            if (!reg.ok) {
+                let body = ''
+                try {
+                    const data = await reg.json()
+                    body = data?.message || data?.error || JSON.stringify(data)
+                } catch (jsonErr) {
+                    body = await reg.text().catch(() => '')
+                }
+                console.error('[PhotoPage] Error en /api/file, body:', body)
+                return
+            }
+
+            const final = await reg.json().catch(() => null)
+            const items = Array.isArray(final?.items) ? final.items : []
+            const savedList = items.length > 0
+                ? items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+                : (Array.isArray(responseList) ? responseList.map((r) => ({
+                    filename: r.originalName,
+                    type: r.service,
+                    filehash: r.storedName,
+                })) : [])
+
+            setUploads((prev) => {
+                const merged = [...prev, ...savedList]
+                if (merged.length > 0) {
+                    const lastIdx = merged.length - 1
+                    setSelectedUploadIndex(lastIdx)
+                    setLastUpload(merged[lastIdx])
+                    try { calculatePrice(merged) } catch (e) { }
+                }
+                return merged
+            })
+            try { if (typeof window !== 'undefined') showToast(files.length > 1 ? 'Archivos subidos y registrados' : 'Archivo subido y registrado', { type: 'success' }) } catch (e) { }
+        } catch (err) {
+            console.error('[PhotoPage] Error al crear y guardar PDF', err)
+        } finally {
+            try { setUploadLoading(false) } catch (e) { }
+        }
+    }
+
     async function createAndStorePdf(opts = {}) {
         if (!localPreview) return
         const genQty = typeof opts.quantity === 'number' ? opts.quantity : quantity
@@ -279,7 +417,7 @@ export default function PhotoPage() {
 
             if (!gen.ok) {
                 const txt = await gen.text().catch(() => '')
-                console.error('[PhotoPage] generate-pdf falló', gen.status, txt)
+                console.error('[PhotoPage] falló la generación del PDF', gen.status, txt)
                 return
             }
 
@@ -301,7 +439,6 @@ export default function PhotoPage() {
             })
 
             if (!upload.ok) {
-                let msg = `Upload proxy failed: ${upload.status} ${upload.statusText}`
                 let body = ''
                 try {
                     const data = await upload.json()
@@ -313,13 +450,11 @@ export default function PhotoPage() {
                 return
             }
 
-            const response = (await upload.json())[0]
+            const responseList = await upload.json()
 
             const payload = {
                 id_user: user?.user?.id_user || user?.user?.id || 1,
-                filename: response.originalName,
-                type: response.service,
-                filehash: response.storedName,
+                resList: responseList,
             }
 
             const reg = await fetch('/api/file', {
@@ -333,7 +468,6 @@ export default function PhotoPage() {
             })
 
             if (!reg.ok) {
-                let msg = `/api/file failed: ${reg.status} ${reg.statusText}`
                 let body = ''
                 try {
                     const data = await reg.json()
@@ -346,10 +480,26 @@ export default function PhotoPage() {
             }
 
             const final = await reg.json().catch(() => null)
-            const saved = final || payload
-            setLastUpload(saved)
+            const items = Array.isArray(final?.items) ? final.items : []
+            const savedList = items.length > 0
+                ? items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+                : (Array.isArray(responseList) ? responseList.map((r) => ({
+                    filename: r.originalName,
+                    type: r.service,
+                    filehash: r.storedName,
+                })) : [])
+
+            setUploads((prev) => {
+                const merged = [...prev, ...savedList]
+                if (merged.length > 0) {
+                    const lastIdx = merged.length - 1
+                    setSelectedUploadIndex(lastIdx)
+                    setLastUpload(merged[lastIdx])
+                    try { calculatePrice(merged) } catch (e) { }
+                }
+                return merged
+            })
             try { if (typeof window !== 'undefined') showToast('Archivo subido y registrado', { type: 'success' }) } catch (e) { }
-            try { calculatePrice(saved) } catch (e) { }
         } catch (err) {
             console.error('[PhotoPage] Error al crear y guardar PDF', err)
         }
@@ -386,20 +536,64 @@ export default function PhotoPage() {
         } catch (e) { return '—' }
     }
 
+    function normalizePriceData(data) {
+        if (!data) return null
+        if (Array.isArray(data)) {
+            const items = data.map((d) => ({ data: d }))
+            let totalPrice = 0
+            let pages = 0
+            let sheets = 0
+            let sets = 0
+            const breakdownPerSet = {}
+            const breakdownTotal = {}
+            data.forEach((d) => {
+                if (typeof d?.totalPrice === 'number') totalPrice += d.totalPrice
+                if (typeof d?.pages === 'number') pages += d.pages
+                if (typeof d?.sheets === 'number') sheets += d.sheets
+                if (typeof d?.sets === 'number') sets += d.sets
+                const perSet = d?.breakdownPerSet || {}
+                const total = d?.breakdownTotal || {}
+                Object.entries(perSet).forEach(([k, v]) => {
+                    if (typeof v === 'number') breakdownPerSet[k] = (breakdownPerSet[k] || 0) + v
+                })
+                Object.entries(total).forEach(([k, v]) => {
+                    if (typeof v === 'number') breakdownTotal[k] = (breakdownTotal[k] || 0) + v
+                })
+            })
+            return {
+                totalPrice,
+                pages: pages || null,
+                sheets: sheets || null,
+                sets: sets || null,
+                breakdownPerSet: Object.keys(breakdownPerSet).length ? breakdownPerSet : null,
+                breakdownTotal: Object.keys(breakdownTotal).length ? breakdownTotal : null,
+                items,
+            }
+        }
+        return { ...data, items: data.items || [{ data }] }
+    }
+
     const calculatePrice = useCallback(async (uploadInfo, overrides = {}) => {
         if (!uploadInfo) return
-        const filename = uploadInfo.filehash || uploadInfo.storedName || uploadInfo.filename
-        if (!filename) return
+        const list = Array.isArray(uploadInfo) ? uploadInfo : [uploadInfo]
+        const filesPayload = list
+            .map((u) => ({
+                filename: u?.filehash || u?.storedName || u?.filename,
+                service: u?.type || u?.service || 'file'
+            }))
+            .filter((u) => Boolean(u.filename))
+        if (filesPayload.length === 0) return
 
         const pt = overrides.printType ?? printType
         const ppaper = overrides.photoPaper ?? photoPaper
 
         const mapPaper = { pb: 'brillante', pm: 'mate', ps: 'satinado' }
 
+        const filenames = filesPayload.map((f) => f.filename)
         const payload = {
-            filename: filename,
+            filename: filenames.length > 1 ? filenames : filenames[0],
+            service: filesPayload[0]?.service || 'file',
             colorModes: pt === 'color' ? 'color' : 'bw',
-            service: uploadInfo.type || uploadInfo.service || 'file',
             type: 'photo',
             paperType: mapPaper[ppaper] || 'brillante',
         }
@@ -430,17 +624,7 @@ export default function PhotoPage() {
             }
 
             const data = await res.json().catch(() => null)
-            const normalized = {
-                pricePerSet: data?.pricePerSet ?? null,
-                totalPrice: data?.totalPrice ?? null,
-                breakdownPerSet: data?.breakdownPerSet ?? null,
-                breakdownTotal: data?.breakdownTotal ?? null,
-                pages: data?.pages ?? null,
-                sheets: data?.sheets ?? null,
-                sets: data?.sets ?? null,
-            }
-
-            setPriceData(normalized)
+            setPriceData(normalizePriceData(data))
         } catch (err) {
             console.error('[PhotoPage] Error al calcular precio', err)
             showError(err?.message || 'Error calculando precio')
@@ -452,10 +636,10 @@ export default function PhotoPage() {
     }, [printType, photoPaper, showToast])
 
     useEffect(() => {
-        if (!lastUpload) return
-        const t = setTimeout(() => calculatePrice(lastUpload), 250)
+        if (!uploads.length) return
+        const t = setTimeout(() => calculatePrice(uploads), 250)
         return () => clearTimeout(t)
-    }, [lastUpload, calculatePrice])
+    }, [uploads, calculatePrice])
 
     function handlePayResult(result) {
         try {
@@ -553,8 +737,41 @@ export default function PhotoPage() {
                                                 </span>
                                             </div>
                                         </label>
-                                        <input id='file-upload' type='file' accept='image/*' className='hidden' onChange={handleFileChange} />
+                                        <input id='file-upload' type='file' multiple accept='image/*' className='hidden' onChange={handleFileChange} />
                                     </div>
+                                    {uploads.length > 0 && (
+                                        <div className='mt-3 text-sm text-gray-700 flex flex-col items-center gap-2'>
+                                            <div>Archivos cargados: {uploads.length}</div>
+                                            <div className='flex flex-wrap gap-2 justify-center'>
+                                                {uploads.map((u, idx) => (
+                                                    <div
+                                                        key={`${u.filehash || u.filename || 'file'}-${idx}`}
+                                                        className={`inline-flex items-center rounded-full border ${idx === selectedUploadIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-700 border-gray-300'}`}
+                                                    >
+                                                        <button
+                                                            type='button'
+                                                            onClick={() => {
+                                                                setSelectedUploadIndex(idx)
+                                                                setLastUpload(u)
+                                                                setPageNumber(1)
+                                                            }}
+                                                            className='px-3 py-1 cursor-pointer'
+                                                        >
+                                                            {u.filename || u.originalName || u.name || `Archivo ${idx + 1}`}
+                                                        </button>
+                                                        <button
+                                                            type='button'
+                                                            aria-label='Quitar archivo'
+                                                            onClick={() => removeUpload(idx)}
+                                                            className={`px-2 py-1 border-l ${idx === selectedUploadIndex ? 'border-blue-300 text-white' : 'border-gray-300 text-gray-600'} hover:text-red-600 cursor-pointer`}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className='w-[80%] p-2 text-black grid grid-cols-[repeat(3,1fr)] grid-rows-[1fr] gap-y-[10px]'>
                                     <div className='w-full p-2'>
@@ -563,11 +780,11 @@ export default function PhotoPage() {
                                         </div>
                                         <div className='w-full flex gap-[24px] flex-col justify-between'>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
-                                                <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { setPrintType('blanco_negro'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (lastUpload) calculatePrice(lastUpload, { printType: 'blanco_negro' }) }} />
+                                                <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { setPrintType('blanco_negro'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (uploads.length) calculatePrice(uploads, { printType: 'blanco_negro' }) }} />
                                                 <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresion Blanco y Negro</label>
                                             </div>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
-                                                <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { setPrintType('color'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (lastUpload) calculatePrice(lastUpload, { printType: 'color' }) }} />
+                                                <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { setPrintType('color'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (uploads.length) calculatePrice(uploads, { printType: 'color' }) }} />
                                                 <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresion a Color</label>
                                             </div>
                                         </div>
@@ -575,7 +792,7 @@ export default function PhotoPage() {
                                             <span>Tamaño</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf({ paperSize: v }), 600) } else if (lastUpload) calculatePrice(lastUpload, { paperSize: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf({ paperSize: v }), 600) } else if (uploads.length) calculatePrice(uploads, { paperSize: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option value='ti'>Tamaño infantil (2.5x3cm)</option>
                                                 <option value='tc'>Tamaño carnet (4x4cm)</option>
                                                 <option value='tap'>Tamaño album pequeño (9x13cm)</option>
@@ -585,7 +802,7 @@ export default function PhotoPage() {
                                             <span>Tipo de papel</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='bound' name='bound' value={photoPaper} onChange={(e) => { const v = e.target.value; setPhotoPaper(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (lastUpload) calculatePrice(lastUpload, { photoPaper: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='bound' name='bound' value={photoPaper} onChange={(e) => { const v = e.target.value; setPhotoPaper(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (uploads.length) calculatePrice(uploads, { photoPaper: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option value='pb'>Papel brillante</option>
                                                 <option value='pm'>Papel mate</option>
                                                 <option value='ps'>Papel satinado</option>
@@ -611,7 +828,7 @@ export default function PhotoPage() {
                                                         if (localPreview) {
                                                             if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current)
                                                             genTimeoutRef.current = setTimeout(() => createAndStorePdf({ quantity: nv }), 600)
-                                                        } else if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                        } else if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                     }}
                                                     className='w-full border rounded-lg block p-2.5 pl-4 pr-12 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500 no-spin'
                                                 />
@@ -625,7 +842,7 @@ export default function PhotoPage() {
                                                             if (localPreview) {
                                                                 if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current)
                                                                 genTimeoutRef.current = setTimeout(() => createAndStorePdf({ quantity: nv }), 600)
-                                                            } else if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                            } else if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                         }}
                                                         className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer'
                                                         aria-label='Disminuir cantidad'
@@ -643,7 +860,7 @@ export default function PhotoPage() {
                                                             if (localPreview) {
                                                                 if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current)
                                                                 genTimeoutRef.current = setTimeout(() => createAndStorePdf({ quantity: nv }), 600)
-                                                            } else if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                            } else if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                         }}
                                                         className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer'
                                                         aria-label='Aumentar cantidad'
@@ -838,7 +1055,7 @@ export default function PhotoPage() {
                                 onClose={() => setPaymentOpen(false)}
                                 amount={priceData?.totalPrice ?? 0}
                                 currency={'MXN'}
-                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity: 1, priceData, deliveryDate, observations, photoPaper }}
+                                context={{ lastUpload, uploads, printType, paperSize, rangeValue, bothSides, quantity: 1, priceData, deliveryDate, observations, photoPaper }}
                                 onPay={(res) => handlePayResult(res)}
                             />
                         </div>

@@ -28,27 +28,51 @@ export async function POST(request) {
 
     const idUser = body.id_user || (user && user.user && (user.user.id_user || user.user.id))
 
-    if (!resObj) {
-        return NextResponse.json({ error: 'Missing file info (res or filename)' }, { status: 400 })
+    const normalizeList = (input) => {
+        if (!input) return []
+        if (Array.isArray(input)) return input
+        return [input]
+    }
+
+    const resList = normalizeList(body.resList || body.files || body.items)
+    const resolvedList = resList.length > 0 ? resList : (resObj ? [resObj] : [])
+
+    if (!resolvedList.length) {
+        return NextResponse.json({ error: 'Missing file info (res, resList, files or filename)' }, { status: 400 })
     }
 
     const authHeader = getAuthHeaderFromRequest(request) || (user && user.token ? `Bearer ${user.token}` : null)
 
     try {
-        const payload = { id_user: idUser, filename: resObj.originalName, type: resObj.service, filehash: resObj.storedName }
+        const results = []
+        for (const item of resolvedList) {
+            const payload = {
+                id_user: idUser,
+                filename: item.originalName || item.filename || item.name || '',
+                type: item.service || item.type || '',
+                filehash: item.storedName || item.filehash || '',
+            }
 
-        const response = await fetch(`${API_URL}/files`, {
-            method: 'POST',
-            headers: {
-                'Accept': '*/*',
-                'Content-Type': 'application/json; charset=utf-8',
-                ...(authHeader ? { 'Authorization': authHeader } : {}),
-            },
-            body: JSON.stringify(payload),
-        })
+            const response = await fetch(`${API_URL}/files`, {
+                method: 'POST',
+                headers: {
+                    'Accept': '*/*',
+                    'Content-Type': 'application/json; charset=utf-8',
+                    ...(authHeader ? { 'Authorization': authHeader } : {}),
+                },
+                body: JSON.stringify(payload),
+            })
 
-        const data = await response.json()
-        return NextResponse.json(data, { status: response.status })
+            const data = await response.json()
+            results.push({ status: response.status, data, payload })
+        }
+
+        if (resolvedList.length === 1) {
+            const single = results[0]
+            return NextResponse.json(single.data || single.payload, { status: single.status || 200 })
+        }
+
+        return NextResponse.json({ ok: true, items: results }, { status: 200 })
     } catch (err) {
         return NextResponse.json({ error: 'Proxy error', details: String(err) }, { status: 500 })
     }

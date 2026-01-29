@@ -10,6 +10,8 @@ export default function PrintPage() {
     const [rangeValue, setRangeValue] = useState('');
     const [br3Selected, setBr3Selected] = useState(true);
     const [lastUpload, setLastUpload] = useState(null)
+    const [uploads, setUploads] = useState([])
+    const [selectedUploadIndex, setSelectedUploadIndex] = useState(0)
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewMounted, setPreviewMounted] = useState(false)
     const [previewVisible, setPreviewVisible] = useState(false)
@@ -26,6 +28,43 @@ export default function PrintPage() {
     const [priceLoading, setPriceLoading] = useState(false)
     const [uploadLoading, setUploadLoading] = useState(false)
     const [paymentOpen, setPaymentOpen] = useState(false)
+
+    function normalizePriceData(data) {
+        if (!data) return null
+        if (Array.isArray(data)) {
+            const items = data.map((d) => ({ data: d }))
+            let totalPrice = 0
+            let pages = 0
+            let sheets = 0
+            let sets = 0
+            const breakdownPerSet = {}
+            const breakdownTotal = {}
+            data.forEach((d) => {
+                if (typeof d?.totalPrice === 'number') totalPrice += d.totalPrice
+                if (typeof d?.pages === 'number') pages += d.pages
+                if (typeof d?.sheets === 'number') sheets += d.sheets
+                if (typeof d?.sets === 'number') sets += d.sets
+                const perSet = d?.breakdownPerSet || {}
+                const total = d?.breakdownTotal || {}
+                Object.entries(perSet).forEach(([k, v]) => {
+                    if (typeof v === 'number') breakdownPerSet[k] = (breakdownPerSet[k] || 0) + v
+                })
+                Object.entries(total).forEach(([k, v]) => {
+                    if (typeof v === 'number') breakdownTotal[k] = (breakdownTotal[k] || 0) + v
+                })
+            })
+            return {
+                totalPrice,
+                pages: pages || null,
+                sheets: sheets || null,
+                sets: sets || null,
+                breakdownPerSet: Object.keys(breakdownPerSet).length ? breakdownPerSet : null,
+                breakdownTotal: Object.keys(breakdownTotal).length ? breakdownTotal : null,
+                items,
+            }
+        }
+        return { ...data, items: data.items || [{ data }] }
+    }
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -74,13 +113,13 @@ export default function PrintPage() {
     }, [previewOpen, previewMounted])
     async function handleFileChange(e) {
         e.preventDefault();
-        const file = e.target.files[0]
-        if (file) {
+        const files = Array.from(e.target.files || [])
+        if (files.length > 0) {
             setUploadLoading(true)
             const user = JSON.parse(localStorage.getItem('user')) || {}
             const token = user?.token
             const fd = new FormData();
-            fd.append('files', file);
+            files.forEach((file) => fd.append('files', file))
             fd.append('username', user?.user?.username || '');
 
             try {
@@ -105,13 +144,10 @@ export default function PrintPage() {
                     throw new Error(msg)
                 }
 
-                const response = (await res.json())[0]
-
+                const responseList = await res.json()
                 const payload = {
                     id_user: user?.user?.id_user || user?.user?.id || 1,
-                    filename: response.originalName,
-                    type: response.service,
-                    filehash: response.storedName,
+                    resList: responseList,
                 }
 
                 const res2 = await fetch('/api/file', {
@@ -141,12 +177,26 @@ export default function PrintPage() {
 
                 const final = await res2.json().catch(() => null)
                 console.log('[PrintPage] Archivo registrado', final)
-                const saved = final || payload
-                setLastUpload(saved)
-                try {
-                    calculatePrice(saved)
-                } catch (err) { console.error('[PrintPage] calculatePrice fallo', err) }
-                showToast('Archivo subido correctamente', { type: 'success' })
+                const items = Array.isArray(final?.items) ? final.items : []
+                const savedList = items.length > 0
+                    ? items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+                    : (Array.isArray(responseList) ? responseList.map((r) => ({
+                        filename: r.originalName,
+                        type: r.service,
+                        filehash: r.storedName,
+                    })) : [])
+
+                setUploads((prev) => {
+                    const merged = [...prev, ...savedList]
+                    if (merged.length > 0) {
+                        const lastIdx = merged.length - 1
+                        setSelectedUploadIndex(lastIdx)
+                        setLastUpload(merged[lastIdx])
+                        try { calculatePrice(merged) } catch (err) { console.error('[PrintPage] calculatePrice fallo', err) }
+                    }
+                    return merged
+                })
+                showToast(files.length > 1 ? 'Archivos subidos correctamente' : 'Archivo subido correctamente', { type: 'success' })
             } catch (err) {
                 const msg = err?.message || String(err) || 'Error desconocido'
                 console.error('[PrintPage] Error al procesar archivo:', err)
@@ -155,6 +205,32 @@ export default function PrintPage() {
                 try { setUploadLoading(false) } catch (e) { console.error('[PrintPage] setUploadLoading fallo', e) }
             }
         }
+        try { e.target.value = '' } catch (e) { }
+    }
+
+    function selectUpload(idx) {
+        const selected = uploads[idx]
+        if (!selected) return
+        setSelectedUploadIndex(idx)
+        setLastUpload(selected)
+        setPageNumber(1)
+    }
+
+    function removeUpload(idx) {
+        setUploads((prev) => {
+            const next = prev.filter((_, i) => i !== idx)
+            if (!next.length) {
+                setSelectedUploadIndex(0)
+                setLastUpload(null)
+                setPriceData(null)
+                return next
+            }
+            const nextIndex = Math.min(selectedUploadIndex, next.length - 1)
+            setSelectedUploadIndex(nextIndex)
+            setLastUpload(next[nextIndex])
+            try { calculatePrice(next) } catch (err) { console.error('[PrintPage] calculatePrice fallo', err) }
+            return next
+        })
     }
 
     const previewFileUrl = useMemo(() => {
@@ -169,8 +245,14 @@ export default function PrintPage() {
 
     const calculatePrice = useCallback(async (uploadInfo, overrides = {}) => {
         if (!uploadInfo) return
-        const filename = uploadInfo.filehash || uploadInfo.storedName || uploadInfo.filename
-        if (!filename) return
+        const list = Array.isArray(uploadInfo) ? uploadInfo : [uploadInfo]
+        const filesPayload = list
+            .map((u) => ({
+                filename: u?.filehash || u?.storedName || u?.filename,
+                service: u?.type || u?.service || 'file'
+            }))
+            .filter((u) => Boolean(u.filename))
+        if (filesPayload.length === 0) return
 
         const pt = overrides.printType ?? printType
         const ps = overrides.paperSize ?? paperSize
@@ -179,13 +261,14 @@ export default function PrintPage() {
         const bs = typeof overrides.bothSides === 'boolean' ? overrides.bothSides : bothSides
         const qty = overrides.quantity ?? quantity
 
+        const filenames = filesPayload.map((f) => f.filename)
         const payload = {
-            filename: filename,
+            filename: filenames.length > 1 ? filenames : filenames[0],
+            service: filesPayload[0]?.service || 'file',
             colorModes: pt === 'color' ? 'color' : 'bw',
             paperSizes: ps || 'carta',
             ranges: br3 ? 'all' : (rv || 'all'),
             bothSides: !!bs,
-            service: uploadInfo.type || uploadInfo.service || 'file',
             type: 'print',
             sets: Number(qty || 1),
         }
@@ -211,7 +294,7 @@ export default function PrintPage() {
                 setPriceData(null)
                 return
             }
-            setPriceData(data)
+            setPriceData(normalizePriceData(data))
         } catch (err) {
             console.error('[PrintPage] Error al calcular precio', err)
             showToast(err?.message || 'Error calculando precio', { type: 'error' })
@@ -222,10 +305,10 @@ export default function PrintPage() {
     }, [printType, paperSize, br3Selected, rangeValue, bothSides, quantity, showToast])
 
     useEffect(() => {
-        if (!lastUpload) return
-        const t = setTimeout(() => calculatePrice(lastUpload), 250)
+        if (!uploads.length) return
+        const t = setTimeout(() => calculatePrice(uploads), 250)
         return () => clearTimeout(t)
-    }, [lastUpload, calculatePrice])
+    }, [uploads, calculatePrice])
 
     function handlePayResult(result) {
         try {
@@ -294,8 +377,37 @@ export default function PrintPage() {
                                                 </span>
                                             </div>
                                         </label>
-                                        <input id='file-upload' type='file' onChange={handleFileChange} className='hidden' disabled={uploadLoading} />
+                                        <input id='file-upload' type='file' multiple onChange={handleFileChange} className='hidden' disabled={uploadLoading} />
                                     </div>
+                                    {uploads.length > 0 && (
+                                        <div className='mt-3 text-sm text-gray-700 flex flex-col items-center gap-2'>
+                                            <div>Archivos cargados: {uploads.length}</div>
+                                            <div className='flex flex-wrap gap-2 justify-center'>
+                                                {uploads.map((u, idx) => (
+                                                    <div
+                                                        key={`${u.filehash || u.filename || 'file'}-${idx}`}
+                                                        className={`inline-flex items-center rounded-full border ${idx === selectedUploadIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-700 border-gray-300'}`}
+                                                    >
+                                                        <button
+                                                            type='button'
+                                                            onClick={() => selectUpload(idx)}
+                                                            className='px-3 py-1 cursor-pointer'
+                                                        >
+                                                            {u.filename || u.originalName || u.name || `Archivo ${idx + 1}`}
+                                                        </button>
+                                                        <button
+                                                            type='button'
+                                                            aria-label='Quitar archivo'
+                                                            onClick={() => removeUpload(idx)}
+                                                            className={`px-2 py-1 border-l ${idx === selectedUploadIndex ? 'border-blue-300 text-white' : 'border-gray-300 text-gray-600'} hover:text-red-600 cursor-pointer`}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className='w-[60%] p-2 text-black grid grid-cols-[70%_30%] grid-rows-[repeat(1,1fr)]'>
                                     <div className='w-full p-2'>
@@ -304,11 +416,11 @@ export default function PrintPage() {
                                         </div>
                                         <div className='w-full flex gap-[24px] flex-col justify-between'>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
-                                                <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { const v = 'blanco_negro'; setPrintType(v); if (lastUpload) calculatePrice(lastUpload, { printType: v }); }} />
+                                                <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { const v = 'blanco_negro'; setPrintType(v); if (uploads.length) calculatePrice(uploads, { printType: v }); }} />
                                                 <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresión Blanco y Negro</label>
                                             </div>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
-                                                <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { const v = 'color'; setPrintType(v); if (lastUpload) calculatePrice(lastUpload, { printType: v }); }} />
+                                                <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { const v = 'color'; setPrintType(v); if (uploads.length) calculatePrice(uploads, { printType: v }); }} />
                                                 <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresión a Color</label>
                                             </div>
                                         </div>
@@ -337,7 +449,7 @@ export default function PrintPage() {
                                                         const v = parseInt(e.target.value || '1', 10)
                                                         const nv = isNaN(v) ? 1 : Math.max(1, v)
                                                         setQuantity(nv)
-                                                        if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                        if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                     }}
                                                     className='w-full border rounded-lg block p-2.5 pl-4 pr-12 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500 no-spin'
                                                 />
@@ -348,7 +460,7 @@ export default function PrintPage() {
                                                             e.preventDefault()
                                                             const nv = Math.max(1, quantity - 1)
                                                             setQuantity(nv)
-                                                            if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                            if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                         }}
                                                         className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer'
                                                         aria-label='Disminuir cantidad'
@@ -363,7 +475,7 @@ export default function PrintPage() {
                                                             e.preventDefault()
                                                             const nv = quantity + 1
                                                             setQuantity(nv)
-                                                            if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
+                                                            if (uploads.length) calculatePrice(uploads, { quantity: nv })
                                                         }}
                                                         className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer'
                                                         aria-label='Aumentar cantidad'
@@ -379,7 +491,7 @@ export default function PrintPage() {
                                             <span>Tamaño de hoja</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (lastUpload) calculatePrice(lastUpload, { paperSize: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (uploads.length) calculatePrice(uploads, { paperSize: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option defaultValue={'def'} value='carta'>Carta</option>
                                                 <option value='oficio'>Oficio</option>
                                             </select>
@@ -399,7 +511,7 @@ export default function PrintPage() {
                                                     const v = true
                                                     setBr3Selected(v);
                                                     setRangeValue('');
-                                                    if (lastUpload) calculatePrice(lastUpload, { br3Selected: v, rangeValue: '' });
+                                                    if (uploads.length) calculatePrice(uploads, { br3Selected: v, rangeValue: '' });
                                                 }}
                                             />
                                             <label htmlFor='br3' className='w-full h-full  text-left pl-2'>Todas</label>
@@ -414,7 +526,7 @@ export default function PrintPage() {
                                                     const v = e.target.value
                                                     setRangeValue(v);
                                                     if (br3Selected) setBr3Selected(false);
-                                                    if (lastUpload) calculatePrice(lastUpload, { br3Selected: false, rangeValue: v });
+                                                    if (uploads.length) calculatePrice(uploads, { br3Selected: false, rangeValue: v });
                                                 }}
                                                 className='bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded-md px-3 py-1 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-300 shadow-sm focus:shadow'
                                                 placeholder='1, 3-6'
@@ -442,7 +554,7 @@ export default function PrintPage() {
                                             <span>Imprimir por:</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='sides' name='sides' value={bothSides ? 'ac' : 'oc'} onChange={(e) => { const v = e.target.value === 'ac'; setBothSides(v); if (lastUpload) calculatePrice(lastUpload, { bothSides: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='sides' name='sides' value={bothSides ? 'ac' : 'oc'} onChange={(e) => { const v = e.target.value === 'ac'; setBothSides(v); if (uploads.length) calculatePrice(uploads, { bothSides: v }); }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option defaultValue={'def'} value='oc'>Una cara</option>
                                                 <option value='ac'>Ambas caras</option>
                                             </select>
@@ -545,7 +657,7 @@ export default function PrintPage() {
                                 onClose={() => setPaymentOpen(false)}
                                 amount={priceData?.totalPrice ?? 0}
                                 currency={'MXN'}
-                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity, priceData }}
+                                context={{ lastUpload, uploads, printType, paperSize, rangeValue, bothSides, quantity, priceData }}
                                 onPay={(res) => handlePayResult(res)}
                             />
                             <div className='py-4'></div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import { getAuthHeaderFromRequest } from '@/lib/get_auth_header'
 
 const CACHE_DIR = path.join(process.cwd(), '.pdf-cache')
 const TTL_MS = 30 * 60 * 1000
