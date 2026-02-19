@@ -13,8 +13,6 @@ export default function PhotoPage() {
     const [rangeValue, setRangeValue] = useState('');
     const [bothSides, setBothSides] = useState(false)
     const [lastUpload, setLastUpload] = useState(null)
-    const [uploads, setUploads] = useState([])
-    const [selectedUploadIndex, setSelectedUploadIndex] = useState(0)
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewMounted, setPreviewMounted] = useState(false)
     const [previewVisible, setPreviewVisible] = useState(false)
@@ -105,15 +103,7 @@ export default function PhotoPage() {
         const files = Array.from(e.target.files || [])
         if (files.length === 0) return
 
-        if (files.length > 1) {
-            try { if (localPreview) URL.revokeObjectURL(localPreview) } catch (e) { }
-            setLocalPreview(null)
-            setCropOpen(false)
-            createAndStorePdfsFromFiles(files)
-            try { e.target.value = '' } catch (e) { }
-            return
-        }
-
+        // Support only a single file: take the first one and ignore the rest
         const file = files[0]
         try {
             try { if (localPreview) URL.revokeObjectURL(localPreview) } catch (e) { }
@@ -126,21 +116,9 @@ export default function PhotoPage() {
         try { e.target.value = '' } catch (e) { }
     }
 
-    function removeUpload(idx) {
-        setUploads((prev) => {
-            const next = prev.filter((_, i) => i !== idx)
-            if (!next.length) {
-                setSelectedUploadIndex(0)
-                setLastUpload(null)
-                setPriceData(null)
-                return next
-            }
-            const nextIndex = Math.min(selectedUploadIndex, next.length - 1)
-            setSelectedUploadIndex(nextIndex)
-            setLastUpload(next[nextIndex])
-            try { calculatePrice(next) } catch (e) { }
-            return next
-        })
+    function removeUpload() {
+        setLastUpload(null)
+        setPriceData(null)
     }
 
     useEffect(() => {
@@ -380,16 +358,11 @@ export default function PhotoPage() {
                     filehash: r.storedName,
                 })) : [])
 
-            setUploads((prev) => {
-                const merged = [...prev, ...savedList]
-                if (merged.length > 0) {
-                    const lastIdx = merged.length - 1
-                    setSelectedUploadIndex(lastIdx)
-                    setLastUpload(merged[lastIdx])
-                    try { calculatePrice(merged) } catch (e) { }
-                }
-                return merged
-            })
+            if (savedList.length > 0) {
+                const last = savedList[savedList.length - 1]
+                setLastUpload(last)
+                try { calculatePrice(last) } catch (e) { }
+            }
             try { if (typeof window !== 'undefined') showToast(files.length > 1 ? 'Archivos subidos y registrados' : 'Archivo subido y registrado', { type: 'success' }) } catch (e) { }
         } catch (err) {
             console.error('[PhotoPage] Error al crear y guardar PDF', err)
@@ -489,16 +462,11 @@ export default function PhotoPage() {
                     filehash: r.storedName,
                 })) : [])
 
-            setUploads((prev) => {
-                const merged = [...prev, ...savedList]
-                if (merged.length > 0) {
-                    const lastIdx = merged.length - 1
-                    setSelectedUploadIndex(lastIdx)
-                    setLastUpload(merged[lastIdx])
-                    try { calculatePrice(merged) } catch (e) { }
-                }
-                return merged
-            })
+            if (savedList.length > 0) {
+                const last = savedList[savedList.length - 1]
+                setLastUpload(last)
+                try { calculatePrice(last) } catch (e) { }
+            }
             try { if (typeof window !== 'undefined') showToast('Archivo subido y registrado', { type: 'success' }) } catch (e) { }
         } catch (err) {
             console.error('[PhotoPage] Error al crear y guardar PDF', err)
@@ -636,10 +604,10 @@ export default function PhotoPage() {
     }, [printType, photoPaper, showToast])
 
     useEffect(() => {
-        if (!uploads.length) return
-        const t = setTimeout(() => calculatePrice(uploads), 250)
+        if (!lastUpload) return
+        const t = setTimeout(() => calculatePrice(lastUpload), 250)
         return () => clearTimeout(t)
-    }, [uploads, calculatePrice])
+    }, [lastUpload, calculatePrice])
 
     function handlePayResult(result) {
         try {
@@ -737,38 +705,29 @@ export default function PhotoPage() {
                                                 </span>
                                             </div>
                                         </label>
-                                        <input id='file-upload' type='file' multiple accept='image/*' className='hidden' onChange={handleFileChange} />
+                                        <input id='file-upload' type='file' accept='image/*' className='hidden' onChange={handleFileChange} />
                                     </div>
-                                    {uploads.length > 0 && (
+                                    {lastUpload && (
                                         <div className='mt-3 text-sm text-gray-700 flex flex-col items-center gap-2'>
-                                            <div>Archivos cargados: {uploads.length}</div>
-                                            <div className='flex flex-wrap gap-2 justify-center'>
-                                                {uploads.map((u, idx) => (
-                                                    <div
-                                                        key={`${u.filehash || u.filename || 'file'}-${idx}`}
-                                                        className={`inline-flex items-center rounded-full border ${idx === selectedUploadIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-700 border-gray-300'}`}
+                                            <div>Archivo cargado: {lastUpload.filename || lastUpload.originalName || lastUpload.name || lastUpload.storedName}</div>
+                                            <div className='flex gap-2 justify-center items-center'>
+                                                <div className='inline-flex items-center rounded-full border bg-gray-100 text-gray-700 border-gray-300'>
+                                                    <button
+                                                        type='button'
+                                                        onClick={() => { setPageNumber(1) }}
+                                                        className='px-3 py-1 cursor-pointer'
                                                     >
-                                                        <button
-                                                            type='button'
-                                                            onClick={() => {
-                                                                setSelectedUploadIndex(idx)
-                                                                setLastUpload(u)
-                                                                setPageNumber(1)
-                                                            }}
-                                                            className='px-3 py-1 cursor-pointer'
-                                                        >
-                                                            {u.filename || u.originalName || u.name || `Archivo ${idx + 1}`}
-                                                        </button>
-                                                        <button
-                                                            type='button'
-                                                            aria-label='Quitar archivo'
-                                                            onClick={() => removeUpload(idx)}
-                                                            className={`px-2 py-1 border-l ${idx === selectedUploadIndex ? 'border-blue-300 text-white' : 'border-gray-300 text-gray-600'} hover:text-red-600 cursor-pointer`}
-                                                        >
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                                        {lastUpload.filename || lastUpload.originalName || lastUpload.name || 'Archivo'}
+                                                    </button>
+                                                    <button
+                                                        type='button'
+                                                        aria-label='Quitar archivo'
+                                                        onClick={() => removeUpload()}
+                                                        className='px-2 py-1 border-l border-gray-300 text-gray-600 hover:text-red-600 cursor-pointer'
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -780,11 +739,11 @@ export default function PhotoPage() {
                                         </div>
                                         <div className='w-full flex gap-[24px] flex-col justify-between'>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
-                                                <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { setPrintType('blanco_negro'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (uploads.length) calculatePrice(uploads, { printType: 'blanco_negro' }) }} />
+                                                <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { setPrintType('blanco_negro'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (lastUpload) calculatePrice(lastUpload, { printType: 'blanco_negro' }) }} />
                                                 <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresion Blanco y Negro</label>
                                             </div>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
-                                                <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { setPrintType('color'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (uploads.length) calculatePrice(uploads, { printType: 'color' }) }} />
+                                                <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { setPrintType('color'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (lastUpload) calculatePrice(lastUpload, { printType: 'color' }) }} />
                                                 <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresion a Color</label>
                                             </div>
                                         </div>
@@ -792,7 +751,7 @@ export default function PhotoPage() {
                                             <span>Tamaño</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf({ paperSize: v }), 600) } else if (uploads.length) calculatePrice(uploads, { paperSize: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf({ paperSize: v }), 600) } else if (lastUpload) calculatePrice(lastUpload, { paperSize: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option value='ti'>Tamaño infantil (2.5x3cm)</option>
                                                 <option value='tc'>Tamaño carnet (4x4cm)</option>
                                                 <option value='tap'>Tamaño album pequeño (9x13cm)</option>
@@ -802,7 +761,7 @@ export default function PhotoPage() {
                                             <span>Tipo de papel</span>
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
-                                            <select id='bound' name='bound' value={photoPaper} onChange={(e) => { const v = e.target.value; setPhotoPaper(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (uploads.length) calculatePrice(uploads, { photoPaper: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
+                                            <select id='bound' name='bound' value={photoPaper} onChange={(e) => { const v = e.target.value; setPhotoPaper(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (lastUpload) calculatePrice(lastUpload, { photoPaper: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option value='pb'>Papel brillante</option>
                                                 <option value='pm'>Papel mate</option>
                                                 <option value='ps'>Papel satinado</option>
@@ -828,7 +787,7 @@ export default function PhotoPage() {
                                                         if (localPreview) {
                                                             if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current)
                                                             genTimeoutRef.current = setTimeout(() => createAndStorePdf({ quantity: nv }), 600)
-                                                        } else if (uploads.length) calculatePrice(uploads, { quantity: nv })
+                                                        } else if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
                                                     }}
                                                     className='w-full border rounded-lg block p-2.5 pl-4 pr-12 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500 no-spin'
                                                 />
@@ -842,7 +801,7 @@ export default function PhotoPage() {
                                                             if (localPreview) {
                                                                 if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current)
                                                                 genTimeoutRef.current = setTimeout(() => createAndStorePdf({ quantity: nv }), 600)
-                                                            } else if (uploads.length) calculatePrice(uploads, { quantity: nv })
+                                                            } else if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
                                                         }}
                                                         className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer'
                                                         aria-label='Disminuir cantidad'
@@ -860,7 +819,7 @@ export default function PhotoPage() {
                                                             if (localPreview) {
                                                                 if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current)
                                                                 genTimeoutRef.current = setTimeout(() => createAndStorePdf({ quantity: nv }), 600)
-                                                            } else if (uploads.length) calculatePrice(uploads, { quantity: nv })
+                                                            } else if (lastUpload) calculatePrice(lastUpload, { quantity: nv })
                                                         }}
                                                         className='w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-lg font-bold cursor-pointer'
                                                         aria-label='Aumentar cantidad'
@@ -1077,7 +1036,7 @@ export default function PhotoPage() {
                                 onClose={() => setPaymentOpen(false)}
                                 amount={priceData?.totalPrice ?? 0}
                                 currency={'MXN'}
-                                context={{ lastUpload, uploads, printType, paperSize, rangeValue, bothSides, quantity: 1, priceData, deliveryDate, observations, photoPaper }}
+                                context={{ lastUpload, printType, paperSize, rangeValue, bothSides, quantity: 1, priceData, deliveryDate, observations, photoPaper }}
                                 onPay={(res) => handlePayResult(res)}
                             />
                         </div>
