@@ -14,15 +14,26 @@ export default async function ProductPapeleriaWrapper() {
     const data = await res.json();
 
     const merged = (data.products || [])
-        .filter(item => item?.item)
-        .map(item => ({
-            id: item.item.id_item,
-            name: item.item.name,
-            description: item.description || '',
-            price: item.price || 0,
-            file: item.file || null,
-            image: item.file ? `${API_URL}/file-manager/download/${item.file.type}/${item.file.filehash}` : '/images/no-image.png',
-        }));
+        .filter(product => product && Array.isArray(product.files) && product.files.length > 0)
+        .map(product => {
+            const file = product.files[0];
+            return {
+                id: product.id_product,
+                name: product.description || `Producto ${product.id_product}`,
+                description: product.description || '',
+                price: Number(product.price) || 0,
+                file: file || null,
+                image: file ? `${API_URL}/file-manager/download/${file.type}/${file.filehash}` : '/images/no-image.png',
+            };
+        });
+
+    if (Array.isArray(data.items)) {
+        data.items.forEach(item => {
+            const mergedItem = merged.find(mi => mi.id === item.id_item);
+            if (mergedItem) mergedItem.name = item.name || mergedItem.name;
+        });
+    }
+
     const finalItems = merged.filter(mi => mi.file && mi.file.type === 'papeleria');
 
     return (

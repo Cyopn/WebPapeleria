@@ -25,11 +25,12 @@ const nextConfig = {
     return [
       {
         source: '/api/file-manager/download/:type/:filehash',
-        destination: 'https://noninitial-chirurgical-judah.ngrok-free.dev/api/file-manager/download/:type/:filehash',
+        destination: 'http://192.168.1.43:5000/api/file-manager/download/:type/:filehash',
       },
     ]
   },
   images: {
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -41,6 +42,12 @@ const nextConfig = {
         protocol: 'http',
         hostname: 'localhost',
         port: '4000',
+        pathname: '/api/file-manager/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '192.168.1.43',
+        port: '5000',
         pathname: '/api/file-manager/**',
       }
     ],

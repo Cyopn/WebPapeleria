@@ -34,8 +34,9 @@ export async function POST(request) {
 
 export async function GET(request) {
     try {
-        const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+        const API_URL = process.env.API_URL
         const authHeader = getAuthHeaderFromRequest(request)
+        console.log('[ProductsAPI] Received GET request. Forwarding to external API with auth header:', authHeader)
         const url = new URL(request.url)
         const search = url.search || ''
 
