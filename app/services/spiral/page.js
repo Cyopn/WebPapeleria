@@ -700,7 +700,7 @@ export default function SpiralPage() {
                                                                 onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
                                                                 disabled={pageNumber <= 1}
                                                             >
-                                                                <i class="fi fi-sr-angle-small-right"></i>
+                                                                <i className="fi fi-sr-angle-small-right"></i>
                                                             </button>
                                                             <span className='p-3 pb-1 text-lg'>Página {pageNumber}{numPages ? ` de ${numPages}` : ''}</span>
                                                             <button
@@ -709,7 +709,7 @@ export default function SpiralPage() {
                                                                 onClick={() => setPageNumber((p) => (numPages ? Math.min(numPages, p + 1) : p + 1))}
                                                                 disabled={numPages ? pageNumber >= numPages : false}
                                                             >
-                                                                <i class="fi fi-sr-angle-small-right"></i>
+                                                                <i className="fi fi-sr-angle-small-right"></i>
                                                             </button>
                                                         </div>
                                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>

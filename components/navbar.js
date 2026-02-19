@@ -38,7 +38,7 @@ export default function Navbar() {
   if (routes.includes(pathname)) {
     return (
       <>
-        <nav className='absolute top-0 w-full z-[99] bg-gradient-to-r from-[#0872EAA3] to-[#5B6FD79E]'>
+        <nav className='absolute top-0 w-full z-[50] bg-gradient-to-r from-[#0872EAA3] to-[#5B6FD79E]'>
           <div className='py-7 flex gap-0 flex-row flex-nowrap justify-evenly items-center content-center text-lg'>
             <Link href='/' className='flex gap-2 items-center content-center hover:text-yellow-300 transition'>
               <Image

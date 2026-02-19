@@ -682,18 +682,18 @@ export default function DocsPage() {
                             />
                             {previewMounted && (
                                 <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
-                                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl max-w-[60vw] w-full p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`} style={{ maxHeight: '80vh' }}>
+                                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] h-[90vh] p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
                                         <div className='flex justify-between items-center'>
                                             <h3 className='text-lg text-black'>Vista previa</h3>
                                         </div>
-                                        <div className='mt-4'>
+                                        <div className='mt-2'>
                                             {lastUpload ? (
                                                 <div className='space-y-3'>
                                                     <div className='text-gray-700 text-md'>Nombre: <span className='font-medium'>{lastUpload.filename || lastUpload.originalName || lastUpload.name}</span></div>
                                                     {previewFileUrl ? (
                                                         <div className='mt-3 space-y-3'>
 
-                                                            <div className='border rounded overflow-scroll overflow-x-hidden flex justify-center bg-gray-50 max-h-[60vh]'>
+                                                            <div className='border rounded overflow-scroll overflow-x-hidden flex justify-center bg-gray-50 h-[64vh]'>
                                                                 <Document
                                                                     file={previewFileUrl}
                                                                     onLoadSuccess={({ numPages: n }) => {
@@ -722,7 +722,7 @@ export default function DocsPage() {
                                                                 onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
                                                                 disabled={pageNumber <= 1}
                                                             >
-                                                                <i class="fi fi-sr-angle-small-right"></i>
+                                                                <i className="fi fi-sr-angle-small-right"></i>
                                                             </button>
                                                             <span className='p-3 pb-1 text-lg'>Página {pageNumber}{numPages ? ` de ${numPages}` : ''}</span>
                                                             <button
@@ -731,7 +731,7 @@ export default function DocsPage() {
                                                                 onClick={() => setPageNumber((p) => (numPages ? Math.min(numPages, p + 1) : p + 1))}
                                                                 disabled={numPages ? pageNumber >= numPages : false}
                                                             >
-                                                                <i class="fi fi-sr-angle-small-right"></i>
+                                                                <i className="fi fi-sr-angle-small-right"></i>
                                                             </button>
                                                         </div>
                                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
