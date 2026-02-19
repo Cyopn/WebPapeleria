@@ -34,6 +34,26 @@ export default function ProductCard({ id, name, description, price, image }) {
         }
     }, [open])
 
+    useEffect(() => {
+        function onOpenProduct(e) {
+            try {
+                const targetId = Number(e?.detail?.id)
+                if (!Number.isNaN(targetId) && targetId === id) {
+                    setQty(1)
+                    setOpen(true)
+                }
+            } catch (err) {
+                // ignore
+            }
+        }
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('open-product', onOpenProduct)
+            return () => window.removeEventListener('open-product', onOpenProduct)
+        }
+        return undefined
+    }, [id])
+
     function handleCardClick() {
         setQty(1)
         setOpen(true)
@@ -43,6 +63,16 @@ export default function ProductCard({ id, name, description, price, image }) {
         setVisible(false)
         const t = setTimeout(() => {
             setOpen(false)
+            try {
+                if (typeof window !== 'undefined') {
+                    const url = new URL(window.location.href)
+                    if (url.searchParams.has('open')) {
+                        url.searchParams.delete('open')
+                        window.history.replaceState({}, '', url.toString())
+                    }
+                }
+            } catch (err) {
+            }
             if (typeof callback === 'function') callback()
         }, 200)
         return () => clearTimeout(t)

@@ -4,12 +4,14 @@ import ProductOficinaWrapper from '@/components/product_oficina_wrapper';
 import ProductPapeleriaWrapper from '@/components/product_papeleria_wrapper';
 import ProductArteWrapper from '@/components/product_arte_wrapper';
 import ProductOtroWrapper from '@/components/product_otro_wrapper';
+import OpenProductHandler from '@/components/open_product_handler';
 import ScrollToTop from '@/components/scroll_to_top';
 
 export default function ProductsPage() {
     return (
         <>
             <section className='text-center'>
+                <OpenProductHandler />
                 <div className='relative top-[104px] w-full h-[65vh] flex justify-center items-center'>
                     <div className='absolute left-0 w-full h-full z-[2] items-center content-center flex justify-center' style={{
                         background: 'linear-gradient(to bottom left, rgba(13,35,94,0.9) 0%, rgba(13,35,94,0.9) 66.666%, rgba(119,173,255,0.5) 66.666%, rgba(119,173,255,0.5) 100%)'

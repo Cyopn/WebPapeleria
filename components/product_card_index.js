@@ -2,17 +2,25 @@
 import Image from 'next/image'
 import { addItem } from '@/lib/cart_store'
 import { useToast } from '@/context/toast_context'
+import { useRouter } from 'next/navigation'
 
 export default function ProductCardIndex({ id, name, description, price, image }) {
     const { showToast } = useToast()
+    const router = useRouter()
 
-    function handleAdd() {
+    function handleAdd(e) {
+        e?.stopPropagation()
         addItem({ id, name, price, image })
         showToast(`${name} agregado al carrito`, { type: 'success' })
     }
 
+    function handleOpenInProducts(e) {
+        e?.stopPropagation()
+        router.push(`/products?open=${id}`)
+    }
+
     return (
-        <div className='w-full h-[90%] flex justify-center items-end flex-row'>
+        <div onClick={handleOpenInProducts} className='w-full h-[90%] flex justify-center items-end flex-row cursor-pointer'>
             <div className='rounded-xl shadow-xl/20  w-[65%] h-[90%] overflow-hidden transition-shadow transform transition-transform duration-300 hover:scale-102'>
                 <div className='relative flex items-center justify-center flex-row content-center bg-gray-500/20 h-7/10 inset-shadow-sm inset-shadow-gray-500'>
                     <Image

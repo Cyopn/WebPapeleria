@@ -36,14 +36,15 @@ export default async function ProductArteWrapper() {
     return (
         <div className='grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full'>
             {finalItems.map(item => (
-                <ProductCard
-                    key={item.id}
-                    id={item.id}
-                    name={item.name}
-                    description={item.description}
-                    price={item.price}
-                    image={item.image}
-                />
+                <div id={`product-${item.id}`} key={item.id}>
+                    <ProductCard
+                        id={item.id}
+                        name={item.name}
+                        description={item.description}
+                        price={item.price}
+                        image={item.image}
+                    />
+                </div>
             ))}
         </div>
     );

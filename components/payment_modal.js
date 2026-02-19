@@ -162,7 +162,6 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                     } else if (filesToUse.length && printType && paperSize && !boundType && !docType && !ringType) {
                         for (let i = 0; i < filesToUse.length; i += 1) {
                             const file = filesToUse[i]
-                            const fileName = file?.filename || file?.filehash || null
                             const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
                             const perFileTotal = getPerFileTotal(i)
                             const printProdPayload = {
@@ -427,7 +426,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                     {method === 'cash' && (
                         <div className='text-sm text-gray-700'>
                             <p>Las impresiones se procesarán una vez que se confirme el pago.</p>
-                            <p>Los pedidos se prepararán una vez que se confirme el pago.</p>
+                            <p>Los pedidos se prepararán una vez que se realice el pago en la tienda física.</p>
                         </div>
                     )}
                     {method === 'paypal' && (
