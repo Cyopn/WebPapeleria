@@ -1,10 +1,14 @@
-'use client'
+"use client"
 import Image from 'next/image'
 import { addItem } from '@/lib/cart_store'
+import { useToast } from '@/context/toast_context'
 
 export default function ProductCardIndex({ id, name, description, price, image }) {
+    const { showToast } = useToast()
+
     function handleAdd() {
         addItem({ id, name, price, image })
+        showToast(`${name} agregado al carrito`, { type: 'success' })
     }
 
     return (
