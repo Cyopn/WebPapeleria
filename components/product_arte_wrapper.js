@@ -16,13 +16,15 @@ export default async function ProductArteWrapper() {
             const file = product.files[0];
             return {
                 id: product.id_product,
-                name: product.description || `Producto ${product.id_product}`,
+                name: (product.item && product.item.name) || product.description || `Producto ${product.id_product}`,
                 description: product.description || '',
                 price: Number(product.price) || 0,
                 file: file || null,
+                category: product.item ? product.item.category : null,
                 image: file ? `${API_URL}/file-manager/download/${file.type}/${file.filehash}` : '/images/no-image.png',
             };
         });
+
 
     if (Array.isArray(data.items)) {
         data.items.forEach(item => {
@@ -31,8 +33,7 @@ export default async function ProductArteWrapper() {
         });
     }
 
-    const finalItems = merged.filter(mi => mi.file && mi.file.type === 'arte_y_diseno');
-
+    const finalItems = merged.filter(mi => mi.category === 'arte_y_diseno');
     return (
         <div className='grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full'>
             {finalItems.map(item => (

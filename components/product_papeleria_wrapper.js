@@ -19,10 +19,12 @@ export default async function ProductPapeleriaWrapper() {
             const file = product.files[0];
             return {
                 id: product.id_product,
-                name: product.description || `Producto ${product.id_product}`,
+                item: product.item || null,
+                name: (product.item && product.item.name) || product.description || `Producto ${product.id_product}`,
                 description: product.description || '',
                 price: Number(product.price) || 0,
                 file: file || null,
+                category: product.item ? product.item.category : null,
                 image: file ? `${API_URL}/file-manager/download/${file.type}/${file.filehash}` : '/images/no-image.png',
             };
         });
@@ -34,7 +36,7 @@ export default async function ProductPapeleriaWrapper() {
         });
     }
 
-    const finalItems = merged.filter(mi => mi.file && mi.file.type === 'papeleria');
+    const finalItems = merged.filter(mi => mi.category === 'papeleria');
 
     return (
         <div className='grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full'>
