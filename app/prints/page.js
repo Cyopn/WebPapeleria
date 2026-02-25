@@ -119,9 +119,8 @@ export default function PrintPage() {
             const user = JSON.parse(localStorage.getItem('user')) || {}
             const token = user?.token
             const fd = new FormData();
-            files.forEach((file) => fd.append('files', file))
+            files.forEach((file) => fd.append('files', file));
             fd.append('username', user?.user?.username || '');
-
             try {
                 const res = await fetch('/api/file-manager', {
                     method: 'POST',
@@ -249,7 +248,7 @@ export default function PrintPage() {
         const filesPayload = list
             .map((u) => ({
                 filename: u?.filehash || u?.storedName || u?.filename,
-                service: u?.type || u?.service || 'file'
+                service: u?.type || u?.service || 'document'
             }))
             .filter((u) => Boolean(u.filename))
         if (filesPayload.length === 0) return
@@ -264,12 +263,12 @@ export default function PrintPage() {
         const filenames = filesPayload.map((f) => f.filename)
         const payload = {
             filename: filenames.length > 1 ? filenames : filenames[0],
-            service: filesPayload[0]?.service || 'file',
+            service: filesPayload[0]?.service || 'document',
             colorModes: pt === 'color' ? 'color' : 'bw',
             paperSizes: ps || 'carta',
             ranges: br3 ? 'all' : (rv || 'all'),
             bothSides: !!bs,
-            type: 'print',
+            type: 'document',
             sets: Number(qty || 1),
         }
         try {
@@ -377,7 +376,7 @@ export default function PrintPage() {
                                                 </span>
                                             </div>
                                         </label>
-                                        <input id='file-upload' type='file' multiple onChange={handleFileChange} className='hidden' disabled={uploadLoading} />
+                                        <input id='file-upload' type='file' multiple accept='application/pdf' onChange={handleFileChange} className='hidden' disabled={uploadLoading} />
                                     </div>
                                     {uploads.length > 0 && (
                                         <div className='mt-3 text-sm text-gray-700 flex flex-col items-center gap-2'>
@@ -385,7 +384,7 @@ export default function PrintPage() {
                                             <div className='flex flex-wrap gap-2 justify-center'>
                                                 {uploads.map((u, idx) => (
                                                     <div
-                                                        key={`${u.filehash || u.filename || 'file'}-${idx}`}
+                                                        key={`${u.filehash || u.filename || 'document'}-${idx}`}
                                                         className={`inline-flex items-center rounded-full border ${idx === selectedUploadIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-700 border-gray-300'}`}
                                                     >
                                                         <button

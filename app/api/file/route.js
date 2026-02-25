@@ -23,7 +23,7 @@ export async function POST(request) {
     if (body.res) {
         resObj = body.res
     } else if (body.filename) {
-        resObj = { originalName: body.filename, service: body.type || '', storedName: body.filehash || '' }
+        resObj = { originalName: body.filename, service: 'document', storedName: body.filehash || '' }
     }
 
     const idUser = body.id_user || (user && user.user && (user.user.id_user || user.user.id))
@@ -49,10 +49,10 @@ export async function POST(request) {
             const payload = {
                 id_user: idUser,
                 filename: item.originalName || item.filename || item.name || '',
-                type: item.service || item.type || '',
+                type: 'document',
                 filehash: item.storedName || item.filehash || '',
             }
-
+            console.log('Payload for file upload:', payload)
             const response = await fetch(`${API_URL}/files`, {
                 method: 'POST',
                 headers: {

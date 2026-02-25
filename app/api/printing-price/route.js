@@ -47,7 +47,7 @@ export async function POST(request) {
     paperSizes: body.paperSizes || body.paperSize || body.paper || 'carta',
     ranges: body.ranges || (body.br3Selected ? 'all' : (body.rangeValue || 'all')) || 'all',
     bothSides: typeof body.bothSides === 'boolean' ? body.bothSides : !!body.bothSides,
-    service: body.service || 'file',
+    service: body.service || 'document',
     sets: Number(body.sets || body.quantity || 1),
     type: body.type || null,
     ringType: body.ringType || body.ring || null,

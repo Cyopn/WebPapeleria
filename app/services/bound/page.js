@@ -263,7 +263,7 @@ export default function BoundPage() {
         const filesPayload = list
             .map((u) => ({
                 filename: u?.filehash || u?.storedName || u?.filename,
-                service: u?.type || u?.service || 'file'
+                service: u?.type || u?.service || 'document'
             }))
             .filter((u) => Boolean(u.filename))
         if (filesPayload.length === 0) return
@@ -280,7 +280,7 @@ export default function BoundPage() {
         const filenames = filesPayload.map((f) => f.filename)
         const payload = {
             filename: filenames.length > 1 ? filenames : filenames[0],
-            service: filesPayload[0]?.service || 'file',
+            service: filesPayload[0]?.service || 'document',
             colorModes: pt === 'color' ? 'color' : 'bw',
             paperSizes: ps || 'carta',
             ranges: br3 ? 'all' : (rv || 'all'),
@@ -401,7 +401,7 @@ export default function BoundPage() {
                                             <div className='flex flex-wrap gap-2 justify-center'>
                                                 {uploads.map((u, idx) => (
                                                     <div
-                                                        key={`${u.filehash || u.filename || 'file'}-${idx}`}
+                                                        key={`${u.filehash || u.filename || 'document'}-${idx}`}
                                                         className={`inline-flex items-center rounded-full border ${idx === selectedUploadIndex ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-700 border-gray-300'}`}
                                                     >
                                                         <button

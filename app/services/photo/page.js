@@ -547,7 +547,7 @@ export default function PhotoPage() {
         const filesPayload = list
             .map((u) => ({
                 filename: u?.filehash || u?.storedName || u?.filename,
-                service: u?.type || u?.service || 'file'
+                service: u?.type || u?.service || 'document'
             }))
             .filter((u) => Boolean(u.filename))
         if (filesPayload.length === 0) return
@@ -560,7 +560,7 @@ export default function PhotoPage() {
         const filenames = filesPayload.map((f) => f.filename)
         const payload = {
             filename: filenames.length > 1 ? filenames : filenames[0],
-            service: filesPayload[0]?.service || 'file',
+            service: filesPayload[0]?.service || 'document',
             colorModes: pt === 'color' ? 'color' : 'bw',
             type: 'photo',
             paperType: mapPaper[ppaper] || 'brillante',
@@ -1000,8 +1000,8 @@ export default function PhotoPage() {
                                         <div className='flex justify-between items-center mb-3'>
                                             <h3 className='text-lg font-semibold text-black'>Recortar imagen</h3>
                                             <div className='flex gap-2'>
-                                                <button onClick={closeCrop} className='px-3 py-1 rounded bg-gray-200'>Cancelar</button>
-                                                <button onClick={applyCrop} className='px-3 py-1 rounded bg-blue-600 text-white'>Aplicar</button>
+                                                <button onClick={closeCrop} className='px-3 py-1 rounded bg-gray-200 text-black cursor-pointer'>Cancelar</button>
+                                                <button onClick={applyCrop} className='px-3 py-1 rounded bg-blue-600 text-white cursor-pointer'>Aplicar</button>
                                             </div>
                                         </div>
                                         <div className='relative h-[60vh]'>
