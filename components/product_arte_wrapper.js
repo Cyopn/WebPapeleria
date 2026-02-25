@@ -10,10 +10,11 @@ export default async function ProductArteWrapper() {
         },
     });
     const data = await res.json();
+    console.log('Fetched products data:', data);
     const merged = (data.products || [])
         .filter(product => product && Array.isArray(product.files) && product.files.length > 0)
         .map(product => {
-            const file = product.files[0];
+            const file = product.file;
             return {
                 id: product.id_product,
                 name: (product.item && product.item.name) || product.description || `Producto ${product.id_product}`,

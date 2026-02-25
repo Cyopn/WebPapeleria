@@ -14,7 +14,7 @@ export default async function ProductOficinaWrapper() {
     const merged = (data.products || [])
         .filter(product => product && Array.isArray(product.files) && product.files.length > 0)
         .map(product => {
-            const file = product.files[0];
+            const file = product.file;
             return {
                 id: product.id_product,
                 item: product.item || null,
