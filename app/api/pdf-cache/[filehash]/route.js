@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAuthHeaderFromRequest } from '../../../../../lib/getAuthHeader'
+import { getAuthHeaderFromRequest } from '../../../../lib/get_auth_header.js'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'

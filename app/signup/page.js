@@ -9,6 +9,7 @@ export default function SignUpPage() {
     const [lastName, setLastName] = useState('')
     const [username, setUsername] = useState('')
     const [email, setEmail] = useState('')
+    const [phone, setPhone] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [loading, setLoading] = useState(false)
@@ -59,6 +60,7 @@ export default function SignUpPage() {
                     lastnames: lastName,
                     username: username,
                     email: email,
+                    phone: phone,
                     password: password,
                     role: 'default',
                 }),
@@ -125,6 +127,14 @@ export default function SignUpPage() {
                                     </span>
                                 </div>
                                 <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={email} onChange={e => setEmail(e.target.value)} placeholder='Correo' type='email' required />
+                            </div>
+                            <div className='relative w-[45%] py-5'>
+                                <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
+                                    <span className='items-center px-3 text-sm w-4 h-4'>
+                                        <span className='fi fi-sr-phone-flip'></span>
+                                    </span>
+                                </div>
+                                <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={phone} onChange={e => setPhone(e.target.value)} placeholder='Teléfono' type='tel' />
                             </div>
                             <div className='relative w-[45%] py-5'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAuthHeaderFromRequest } from '../../../../../lib/getAuthHeader'
+import { getAuthHeaderFromRequest } from '../../../../../../lib/get_auth_header.js'
 
 export async function GET(request, { params }) {
     const { type, filehash } = params || {}
