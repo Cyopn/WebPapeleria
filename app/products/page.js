@@ -6,6 +6,7 @@ import ProductArteWrapper from '@/components/product_arte_wrapper';
 import ProductOtroWrapper from '@/components/product_otro_wrapper';
 import OpenProductHandler from '@/components/open_product_handler';
 import ScrollToTop from '@/components/scroll_to_top';
+import Footer from '@/components/footer';
 
 export default function ProductsPage() {
     return (
@@ -109,6 +110,7 @@ export default function ProductsPage() {
                 </div>
             </section>
             <ScrollToTop />
+            <Footer/>
         </>
     )
 }

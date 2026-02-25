@@ -1,7 +1,6 @@
 import './globals.css'
 import '../styles/animation.css'
 import Navbar from '@/components/navbar'
-import Footer from '@/components/footer'
 import { AuthProvider } from '@/context/auth_context'
 import { ToastProvider } from '@/context/toast_context'
 import { PaymentProvider } from '@/context/payment_context'
@@ -23,7 +22,7 @@ export default function RootLayout({ children }) {
             <PaymentProvider>
               <Navbar />
               <main className='h-full'>{children}</main>
-              <Footer />
+              
             </PaymentProvider>
           </ToastProvider>
         </AuthProvider>
