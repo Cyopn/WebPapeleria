@@ -58,7 +58,7 @@ export async function GET(req) {
         }
     }
 
-    const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+    const API_URL = process.env.API_URL
     const authHeader = getAuthHeaderFromRequest(req)
     const upstreamHash = filehash.endsWith('.pdf') ? filehash : `${filehash}.pdf`
     const upstream = `${API_URL}/file-manager/download/${type}/${upstreamHash}`

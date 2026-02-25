@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
     const body = await request.json();
-    const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api';
+    const API_URL = process.env.API_URL
     try {
         const res = await fetch(`${API_URL}/users/login`, {
             method: 'POST',

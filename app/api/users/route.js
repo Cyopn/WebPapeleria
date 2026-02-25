@@ -5,7 +5,7 @@ export async function POST(request) {
     try {
         const body = await request.json()
         if (!body.role) body.role = 'default'
-        const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+        const API_URL = process.env.API_URL
         const upstream = `${API_URL}/users`
 
         const res = await fetch(upstream, {
@@ -25,7 +25,7 @@ export async function POST(request) {
 
 export async function GET(request) {
     try {
-        const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+        const API_URL = process.env.API_URL
         const upstream = `${API_URL}/users`
         const authHeader = getAuthHeaderFromRequest(request)
         const res = await fetch(upstream, {

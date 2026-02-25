@@ -6,7 +6,7 @@ export async function GET(request, { params }) {
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
     try {
-        const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+        const API_URL = process.env.API_URL
         const authHeader = getAuthHeaderFromRequest(request)
         const response = await fetch(`${API_URL}/transactions/${encodeURIComponent(id)}`, {
             method: 'GET',

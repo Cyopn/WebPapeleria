@@ -9,7 +9,7 @@ export async function POST(request) {
         const received = request.headers.get('content-type') || ''
         console.log('[FileManagerAPI] file-manager: parseo de formData falló', String(err), 'content-type:', received)
         try {
-            const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+            const API_URL = process.env.API_URL
             const authHeader = getAuthHeaderFromRequest(request)
             const raw = await request.arrayBuffer()
             console.log('[FileManagerAPI] file-manager: reenviando cuerpo sin procesar, tamaño en bytes =', raw?.byteLength)
@@ -56,7 +56,7 @@ export async function POST(request) {
     }
     fd.append('username', (user && user.user && user.user.username) ? user.user.username : '')
 
-    const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+    const API_URL = process.env.API_URL
     try {
         const res = await fetch(`${API_URL}/file-manager?service=file`, {
             method: 'POST',

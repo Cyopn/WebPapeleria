@@ -64,7 +64,7 @@ export async function GET(_req, { params }) {
         return NextResponse.json({ error: 'Missing type query param' }, { status: 400 })
     }
 
-    const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+    const API_URL = process.env.API_URL
     const authHeader = getAuthHeaderFromRequest(_req)
     const upstream = `${API_URL}/file-manager/download/${type}/${filehash}`
 

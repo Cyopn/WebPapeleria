@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
         return NextResponse.json({ error: 'Missing file type or hash' }, { status: 400 })
     }
 
-    const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
+    const API_URL = process.env.API_URL
     const upstream = `${API_URL}/file-manager/download/${type}/${filehash}`
 
     try {
