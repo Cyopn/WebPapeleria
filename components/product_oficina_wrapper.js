@@ -3,7 +3,7 @@ import ProductCard from './product_card'
 export default async function ProductOficinaWrapper() {
     const API_URL = process.env.API_URL
     const BEARER_TOKEN = process.env.BEARER_TOKEN
-    const res = await fetch(`${API_URL}/products/`, {
+    const res = await fetch(`${API_URL}/products/type/item`, {
         headers: {
             'Accept': '*/*',
             'Authorization': `Bearer ${BEARER_TOKEN}`,

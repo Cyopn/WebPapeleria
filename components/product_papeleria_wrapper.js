@@ -3,7 +3,7 @@ import ProductCard from './product_card'
 export default async function ProductPapeleriaWrapper() {
     const API_URL = process.env.API_URL || 'https://noninitial-chirurgical-judah.ngrok-free.dev/api'
     const BEARER_TOKEN = process.env.BEARER_TOKEN
-    const res = await fetch(`${API_URL}/products/`, {
+    const res = await fetch(`${API_URL}/products/type/item`, {
         headers: {
             'Accept': '*/*',
             'Content-Type': 'application/json; charset=utf-8',

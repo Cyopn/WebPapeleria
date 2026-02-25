@@ -3,14 +3,13 @@ import ProductCard from './product_card'
 export default async function ProductArteWrapper() {
     const API_URL = process.env.API_URL
     const BEARER_TOKEN = process.env.BEARER_TOKEN
-    const res = await fetch(`${API_URL}/products/`, {
+    const res = await fetch(`${API_URL}/products/type/item`, {
         headers: {
             'Accept': '*/*',
             'Authorization': `Bearer ${BEARER_TOKEN}`,
         },
     });
     const data = await res.json();
-    console.log('Fetched products data:', data);
     const merged = (data.products || [])
         .filter(product => product && Array.isArray(product.files) && product.files.length > 0)
         .map(product => {

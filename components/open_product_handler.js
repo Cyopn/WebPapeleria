@@ -8,7 +8,7 @@ export default function OpenProductHandler() {
 
     useEffect(() => {
         if (!open) return
-        const id = BookOpenText
+        const id = open
         const t = setTimeout(() => {
             const el = document.getElementById(`product-${id}`)
             if (el) {
