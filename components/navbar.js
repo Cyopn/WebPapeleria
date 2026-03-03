@@ -61,7 +61,7 @@ export default function Navbar() {
     setLoadingSuggestions(true)
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/products?search=${encodeURIComponent(q)}`)
+        const res = await fetch(`/api/products/type/item?search=${encodeURIComponent(q)}`)
         const data = await res.json().catch(() => null)
         const results = []
         if (data) {
@@ -268,7 +268,7 @@ export default function Navbar() {
                 return
               }
               try {
-                const res = await fetch(`/api/products?search=${encodeURIComponent(q)}`)
+                const res = await fetch(`/api/products/type/item?search=${encodeURIComponent(q)}`)
                 const data = await res.json().catch(() => null)
                 let id = null
                 if (data) {
