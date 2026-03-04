@@ -46,10 +46,14 @@ export async function POST(request) {
     try {
         const results = []
         for (const item of resolvedList) {
+            const normalizedType = (() => {
+                const rawType = String(item.service || item.type || 'document').toLowerCase()
+                return rawType === 'file' ? 'document' : rawType
+            })()
             const payload = {
                 id_user: idUser,
                 filename: item.originalName || item.filename || item.name || '',
-                type: 'document',
+                type: normalizedType,
                 filehash: item.storedName || item.filehash || '',
             }
             console.log('Payload for file upload:', payload)

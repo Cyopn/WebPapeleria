@@ -8,6 +8,26 @@ import { useToast } from '@/context/toast_context'
 export default function SlideMenu({ open, onClose }) {
     const lockRef = useRef(false)
 
+    function resolveAvatarSrc(avatarValue) {
+        if (!avatarValue) return '/images/no-image.png'
+        const val = String(avatarValue).trim()
+        if (!val || val === 'undefined' || val === 'null') return '/images/no-image.png'
+        if (
+            val.startsWith('http://') ||
+            val.startsWith('https://') ||
+            val.startsWith('blob:') ||
+            val.startsWith('data:') ||
+            val.startsWith('/images/') ||
+            val.startsWith('/api/file-manager/download/')
+        ) {
+            return val
+        }
+        if (val.startsWith('file-manager/download/')) {
+            return `/api/${val}`
+        }
+        return `/api/file-manager/download/avatar/${encodeURIComponent(val)}`
+    }
+
     function lockBody() {
         if (typeof window === 'undefined') return
         if (lockRef.current) return
@@ -54,7 +74,7 @@ export default function SlideMenu({ open, onClose }) {
                     if (raw) {
                         const parsed = JSON.parse(raw)
                         const u = parsed?.user || parsed || {}
-                        const maybeId = parsed?.id || parsed?.user?.id || u?.id || null
+                        const maybeId = parsed?.user?.id_user ?? parsed?.user?.id ?? parsed?.id_user ?? parsed?.id ?? u?.id_user ?? u?.id ?? null
                         if (maybeId === 1) {
                             try { showToast('Función disponible iniciando sesión') } catch (e) { console.error('[SlideMenu] showToast fallo', e) }
                             if (typeof onClose === 'function') onClose()
@@ -128,9 +148,9 @@ export default function SlideMenu({ open, onClose }) {
                     <div className='w-full h-full flex flex-col min-h-0'>
                         <div className='w-full h-[25%] flex justify-center items-center py-2'>
                             <Image
-                                src={userData.avatar || '/images/no-image.png'}
+                                src={resolveAvatarSrc(userData.avatar)}
                                 alt={userData.name || 'avatar'}
-                                className='h-[80%] w-auto rounded-full'
+                                className='h-[80%] w-[40%] rounded-full'
                                 width={300}
                                 height={300}
                                 loading='eager' />
@@ -172,7 +192,7 @@ export default function SlideMenu({ open, onClose }) {
                         </div>
                         <div onClick={(e) => { e.preventDefault(); showToast('Opción no disponible') }} className='w-full flex flex-col justify-center items-center text-left py-2'>
                             <div className='w-full py-3'>
-                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opción no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); onClose && onClose(); router.push('/account') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
                                     <div className='pl-10 w-auto'>
                                         <span className='text-xl px-2 h-full text-black'>
                                             <span className='fi fi-br-document'></span>

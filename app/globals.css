@@ -25,7 +25,6 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Scroll to top button */
 .scroll-to-top {
   position: fixed;
   right: 1rem;

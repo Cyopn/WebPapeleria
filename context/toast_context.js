@@ -30,7 +30,15 @@ export function ToastProvider({ children }) {
         return id
     }, [])
 
-    const value = { showToast }
+    const dismissToast = useCallback((id) => {
+        if (!id) return
+        setToasts((t) => t.map((x) => (x.id === id ? { ...x, visible: false } : x)))
+        setTimeout(() => {
+            setToasts((t) => t.filter((x) => x.id !== id))
+        }, ANIM_DURATION)
+    }, [])
+
+    const value = { showToast, dismissToast }
     return (
         <ToastContext.Provider value={value}>
             {children}

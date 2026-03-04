@@ -140,7 +140,7 @@ export default function BoundPage() {
             fd.append('username', user?.user?.username || '');
 
             try {
-                const res = await fetch('/api/file-manager', {
+                const res = await fetch('/api/file-manager?service=document', {
                     method: 'POST',
                     headers: { 'Accept': '*/*', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                     body: fd

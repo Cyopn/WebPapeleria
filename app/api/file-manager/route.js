@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthHeaderFromRequest } from '@/lib/get_auth_header'
 
 export async function POST(request) {
+    const requestedService = request.nextUrl?.searchParams?.get('service') || 'document'
     let body
     try {
         body = await request.formData()
@@ -18,7 +19,7 @@ export async function POST(request) {
                 ...(authHeader ? { 'Authorization': authHeader } : {}),
                 ...(received ? { 'Content-Type': received } : {}),
             }
-            const proxied = await fetch(`${API_URL}/file-manager?service=file`, {
+            const proxied = await fetch(`${API_URL}/file-manager?service=${encodeURIComponent(requestedService)}`, {
                 method: 'POST',
                 headers: forwardHeaders,
                 body: raw,
@@ -58,7 +59,7 @@ export async function POST(request) {
 
     const API_URL = process.env.API_URL
     try {
-        const res = await fetch(`${API_URL}/file-manager?service=file`, {
+        const res = await fetch(`${API_URL}/file-manager?service=${encodeURIComponent(requestedService)}`, {
             method: 'POST',
             headers: {
                 'Accept': '*/*',

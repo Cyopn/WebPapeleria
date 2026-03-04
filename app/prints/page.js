@@ -122,7 +122,7 @@ export default function PrintPage() {
             files.forEach((file) => fd.append('files', file));
             fd.append('username', user?.user?.username || '');
             try {
-                const res = await fetch('/api/file-manager', {
+                const res = await fetch('/api/file-manager?service=document', {
                     method: 'POST',
                     headers: { 'Accept': '*/*', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                     body: fd
@@ -320,7 +320,6 @@ export default function PrintPage() {
             console.error('[PrintPage] Error inesperado:', e)
         }
     }
-
 
     return (
         <section className='text-center'>

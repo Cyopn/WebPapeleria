@@ -301,7 +301,7 @@ export default function PhotoPage() {
             pdfFiles.forEach((file) => fd.append('files', file))
             fd.append('username', user?.user?.username || '')
 
-            const upload = await fetch('/api/file-manager', {
+            const upload = await fetch('/api/file-manager?service=document', {
                 method: 'POST',
                 headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: fd,
@@ -405,7 +405,7 @@ export default function PhotoPage() {
             fd.append('files', file)
             fd.append('username', user?.user?.username || '')
 
-            const upload = await fetch('/api/file-manager', {
+            const upload = await fetch('/api/file-manager?service=document', {
                 method: 'POST',
                 headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
                 body: fd,
@@ -914,7 +914,7 @@ export default function PhotoPage() {
                             </form>
                             {previewMounted && (
                                 <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-[50] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
-                                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] h-[90vh] p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
+                                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] h-[85vh] p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
                                         <div className='flex justify-between items-center'>
                                             <h3 className='text-lg text-black font-semibold'>Vista previa</h3>
                                             <button onClick={() => setPreviewOpen(false)} className='text-gray-600 cursor-pointer'>Cerrar</button>

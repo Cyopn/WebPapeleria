@@ -3,17 +3,32 @@ import ProductCard from './product_card'
 export default async function ProductPapeleriaWrapper() {
     const API_URL = process.env.API_URL
     const BEARER_TOKEN = process.env.BEARER_TOKEN
-    const res = await fetch(`${API_URL}/products/type/item`, {
-        headers: {
-            'Accept': '*/*',
-            'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': `Bearer ${BEARER_TOKEN}`,
-        },
-        cache: 'no-store',
-    });
-    const data = await res.json();
+    let data = null
 
-    const merged = (data.products || [])
+    try {
+        if (!API_URL) {
+            return <div className='grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full' />
+        }
+
+        const res = await fetch(`${API_URL}/products/type/item`, {
+            headers: {
+                'Accept': '*/*',
+                'Content-Type': 'application/json; charset=utf-8',
+                ...(BEARER_TOKEN ? { 'Authorization': `Bearer ${BEARER_TOKEN}` } : {}),
+            },
+            cache: 'no-store',
+        })
+
+        if (!res.ok) {
+            return <div className='grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full' />
+        }
+
+        data = await res.json().catch(() => null)
+    } catch (e) {
+        return <div className='grid grid-cols-[repeat(5,1fr)] grid-rows-[repeat(1,1fr)] w-full h-full' />
+    }
+
+    const merged = (data?.products || [])
         .filter(product => product && Array.isArray(product.files) && product.files.length > 0)
         .map(product => {
             const file = product.file;
@@ -29,7 +44,7 @@ export default async function ProductPapeleriaWrapper() {
             };
         });
 
-    if (Array.isArray(data.items)) {
+    if (Array.isArray(data?.items)) {
         data.items.forEach(item => {
             const mergedItem = merged.find(mi => mi.id === item.id_item);
             if (mergedItem) mergedItem.name = item.name || mergedItem.name;
