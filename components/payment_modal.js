@@ -11,6 +11,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
     const [loading, setLoading] = useState(false)
     const [qrCode, setQrCode] = useState(null)
     const [qrInfo, setQrInfo] = useState(null)
+    const [transactionId, setTransactionId] = useState(null)
     const [currentCartItems, setCurrentCartItems] = useState(() => getItems())
     const ANIM_DURATION = 200
     const lockRef = useRef(false)
@@ -49,6 +50,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
             tIn = setTimeout(() => setVisible(true), 10)
             setQrCode(null)
             setQrInfo(null)
+            setTransactionId(null)
             setLoading(false)
             lockBody()
         } else if (mounted) {
@@ -354,6 +356,8 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
 
                     if (!trxId) throw new Error('No se obtuvo id de transacción')
 
+                    setTransactionId(trxId)
+
                     try { const trxFull = await req(`/transactions/${trxId}`, 'GET'); console.log('[PaymentModal] transacción completa obtenida', trxFull) } catch (e) { console.warn('[PaymentModal] no se pudo obtener la transacción completa', String(e)) }
                     setLoading(false)
                     showToast('Pago en efectivo registrado correctamente', { type: 'success' })
@@ -415,7 +419,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             <Image src={qrCode} alt='Código QR de pago' width={208} height={208} className='w-52 h-52 object-contain border rounded-lg bg-white' />
                             <a
                                 href={qrCode}
-                                download={`qr-${(qrInfo && typeof qrInfo === 'object' && qrInfo.id_transaction) ? qrInfo.id_transaction : 'pago'}.png`}
+                                download={`${transactionId ? `trx-${transactionId}` : `qr-${(qrInfo && typeof qrInfo === 'object' && qrInfo.id_transaction) ? qrInfo.id_transaction : 'pago'}`}.png`}
                                 className='text-sm px-4 py-2 rounded-full bg-[#E6F1FF] text-blue-700 hover:bg-[#D6E8FF]'
                             >Descargar QR</a>
                             {qrInfo && typeof qrInfo === 'string' && (
