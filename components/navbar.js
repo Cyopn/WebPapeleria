@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { ShoppingCart, Menu, Search, Trash2, PlusCircle, MinusCircle } from 'lucide-react'
+import { ShoppingCart, Menu, Search } from 'lucide-react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth_context'
@@ -9,13 +9,14 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import SlideMenu from './slide_menu'
 import CartModal from './cart_modal'
-import { subscribe, getCount, getItems, clear } from '@/lib/cart_store'
+import { subscribe, getCount, getItems } from '@/lib/cart_store'
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { openPayment } = usePayment();
-  const routes = ['/prints', '/services', '/products', '/services/photo'];
+  const currentUserId = user?.user?.id_user ?? user?.user?.id ?? user?.id_user ?? user?.id ?? null
+  const routes = ['/prints', '/services', '/products', '/services/photo', '/account'];
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getCount())
   const [cartOpen, setCartOpen] = useState(false)
@@ -61,7 +62,7 @@ export default function Navbar() {
     setLoadingSuggestions(true)
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/products/type/item?search=${encodeURIComponent(q)}`)
+        const res = await fetch(`/api/products?search=${encodeURIComponent(q)}`)
         const data = await res.json().catch(() => null)
         const results = []
         if (data) {
@@ -199,7 +200,7 @@ export default function Navbar() {
                 )}
               </form>
             </div>
-            {(!user || user?.id === 1) && (<Link
+            {(!currentUserId || currentUserId === 1) && (<Link
               href='/signin'
               className='text-black px-5 py-2 rounded-xl bg-gradient-to-r from-[#7BCE6D] to-[#A8D860]'
             >
@@ -268,7 +269,7 @@ export default function Navbar() {
                 return
               }
               try {
-                const res = await fetch(`/api/products/type/item?search=${encodeURIComponent(q)}`)
+                const res = await fetch(`/api/products?search=${encodeURIComponent(q)}`)
                 const data = await res.json().catch(() => null)
                 let id = null
                 if (data) {
@@ -313,7 +314,7 @@ export default function Navbar() {
               )}
             </form>
           </div>
-          {(!user || user?.id === 1) && (<Link
+          {(!currentUserId || currentUserId === 1) && (<Link
             href='/signin'
             className='text-black px-5 py-2 rounded-xl bg-gradient-to-r from-[#7BCE6D] to-[#A8D860]'
           >
