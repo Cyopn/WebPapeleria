@@ -122,8 +122,8 @@ export default function ProductCard({ id, name, description, price, image }) {
                 </div>
             </div>
             {open && (
-                <div onClick={handleClose} className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}>
-                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl max-w-[60vw] w-full p-6 transform transition-all duration-200 ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
+                <div onClick={handleClose} className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] p-6 transform transition-all duration-200 ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
                         <div className='w-full'>
                             <button onClick={handleClose} className='text-gray-600 w-full cursor-pointer text-right'>Cerrar</button>
                         </div>

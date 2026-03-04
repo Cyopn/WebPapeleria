@@ -394,12 +394,12 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
     return (
         <div
             onClick={handleClose}
-            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${visible ? 'opacity-100' : 'opacity-0'}`}>
+            className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${visible ? 'opacity-100' : 'opacity-0'}`}>
             <div
                 onClick={(e) => e.stopPropagation()}
-                className={`bg-white rounded-xl w-full max-w-[60%] mx-6 pb-6 transform transition-all flex flex-col items-center duration-${ANIM_DURATION} ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
+                className={`bg-white rounded-xl w-[60%] mx-6 pb-6 transform transition-all flex flex-col items-center duration-${ANIM_DURATION} ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
                 <div className='w-full bg-[#A8D860AB] rounded-t-xl px-6'>
-                    <h3 className='text-xl font-semibold text-black py-2'>Gestion de pago</h3>
+                    <h3 className='text-xl font-semibold text-black py-2'>Gestión de pago</h3>
                 </div>
                 <p className='mt-2 text-lg text-gray-600'>Total: <span className='font-medium'>$ {displayAmount} {currency}</span></p>
                 <div className='w-[80%] mt-4 text-black'>
@@ -444,13 +444,13 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         {qrCode ? (
                             <button
                                 onClick={handleClose}
-                                className='w-full bg-gradient-to-r from-[#7AD0EC] to-[#006DEC] text-black py-3 rounded-xl cursor-pointer '
+                                className='w-full bg-gradient-to-r from-[#7AD0EC] to-[#006DEC] text-black py-3 rounded-xl cursor-pointer'
                             >Cerrar</button>
                         ) : (
                             <button
                                 onClick={handlePay}
                                 disabled={loading}
-                                className='w-full bg-gradient-to-r from-[#7AD0EC] to-[#006DEC] text-black py-3 rounded-xl cursor-pointer '
+                                className='w-full bg-gradient-to-r from-[#7AD0EC] to-[#006DEC] text-black py-3 rounded-xl cursor-pointer'
                             >{loading ? 'Procesando...' : 'Pagar'}</button>
                         )}
                     </div>

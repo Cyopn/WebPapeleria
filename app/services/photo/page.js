@@ -103,7 +103,6 @@ export default function PhotoPage() {
         const files = Array.from(e.target.files || [])
         if (files.length === 0) return
 
-        // Support only a single file: take the first one and ignore the rest
         const file = files[0]
         try {
             try { if (localPreview) URL.revokeObjectURL(localPreview) } catch (e) { }
@@ -914,7 +913,7 @@ export default function PhotoPage() {
                             </form>
                             {previewMounted && (
                                 <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-[50] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
-                                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] h-[85vh] p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
+                                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
                                         <div className='flex justify-between items-center'>
                                             <h3 className='text-lg text-black font-semibold'>Vista previa</h3>
                                             <button onClick={() => setPreviewOpen(false)} className='text-gray-600 cursor-pointer'>Cerrar</button>

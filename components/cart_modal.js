@@ -56,7 +56,7 @@ export default function CartModal({ open, onClose, cartCount, onContinuePurchase
     return (
         <div
             onClick={onClose}
-            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${visible ? 'opacity-100' : 'opacity-0'}`}>
+            className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${visible ? 'opacity-100' : 'opacity-0'}`}>
             <div
                 onClick={(e) => e.stopPropagation()}
                 className={`bg-white rounded-xl max-w-[60vw] w-full p-6 overflow-auto mt-[104px] transform transition-all duration-${ANIM_DURATION} ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'

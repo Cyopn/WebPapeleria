@@ -41,6 +41,10 @@ export default function AccountPage() {
     const unsavedToastRef = useRef(null)
     const avatarInputRef = useRef(null)
     const avatarObjectUrlRef = useRef(null)
+    const nameInputRef = useRef(null)
+    const usernameInputRef = useRef(null)
+    const emailInputRef = useRef(null)
+    const phoneInputRef = useRef(null)
     const [avatarPreview, setAvatarPreview] = useState(null)
     const [avatarBlob, setAvatarBlob] = useState(null)
     const [cropOpen, setCropOpen] = useState(false)
@@ -368,10 +372,10 @@ export default function AccountPage() {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    names: state.form.name,
-                    username: state.form.username,
-                    email: state.form.email,
-                    phone: state.form.phone,
+                    names: (nameInputRef.current?.value ?? state.form.name),
+                    username: (usernameInputRef.current?.value ?? state.form.username),
+                    email: (emailInputRef.current?.value ?? state.form.email),
+                    phone: (phoneInputRef.current?.value ?? state.form.phone),
                     avatar: avatarValue,
                 }),
             })
@@ -385,15 +389,19 @@ export default function AccountPage() {
                 if (raw) {
                     const parsed = JSON.parse(raw)
                     const u = parsed?.user || parsed || {}
-                    const merged = { ...u, names: state.form.name, username: state.form.username, email: state.form.email, phone: state.form.phone, avatar: avatarValue }
+                    const newNames = nameInputRef.current?.value ?? state.form.name
+                    const newUsername = usernameInputRef.current?.value ?? state.form.username
+                    const newEmail = emailInputRef.current?.value ?? state.form.email
+                    const newPhone = phoneInputRef.current?.value ?? state.form.phone
+                    const merged = { ...u, names: newNames, username: newUsername, email: newEmail, phone: newPhone, avatar: avatarValue }
                     const toStore = parsed?.user ? { ...parsed, user: merged } : merged
                     localStorage.setItem('user', JSON.stringify(toStore))
                 }
             } catch (e) {
                 console.error('[AccountPage] error updating localStorage', e)
             }
-            setState((s) => ({ ...s, form: { ...s.form, avatar: avatarValue } }))
-            setOriginalForm((prev) => ({ ...prev, ...state.form, avatar: avatarValue }))
+            setState((s) => ({ ...s, form: { ...s.form, name: (nameInputRef.current?.value ?? s.form.name), username: (usernameInputRef.current?.value ?? s.form.username), email: (emailInputRef.current?.value ?? s.form.email), phone: (phoneInputRef.current?.value ?? s.form.phone), avatar: avatarValue } }))
+            setOriginalForm((prev) => ({ ...prev, name: (nameInputRef.current?.value ?? prev.name), username: (usernameInputRef.current?.value ?? prev.username), email: (emailInputRef.current?.value ?? prev.email), phone: (phoneInputRef.current?.value ?? prev.phone), avatar: avatarValue }))
             if (avatarObjectUrlRef.current) {
                 try { URL.revokeObjectURL(avatarObjectUrlRef.current) } catch (e) { }
                 avatarObjectUrlRef.current = null
@@ -420,8 +428,8 @@ export default function AccountPage() {
                 <div className='flex items-center justify-between gap-3'>
                     <span>Hay cambios sin guardar</span>
                     <div className='flex items-center gap-2'>
-                        <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleResetToOriginal(e) }} className='px-3 py-1 bg-white text-black rounded cursor-pointer'>Reestablecer</button>
-                        <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleSave() }} className='px-3 py-1 bg-white text-black rounded cursor-pointer'>Guardar</button>
+                        <button onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleResetToOriginal(e) }} className='px-3 py-1 bg-white text-black rounded cursor-pointer'>Reestablecer</button>
+                        <button onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleSave() }} className='px-3 py-1 bg-white text-black rounded cursor-pointer'>Guardar</button>
                     </div>
                 </div>
             )
@@ -522,79 +530,79 @@ export default function AccountPage() {
                             )}
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Nombre</label>
-                                <input value={state.form.name} onChange={(e) => handleChange('name', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
+                                <input ref={nameInputRef} value={state.form.name} onChange={(e) => handleChange('name', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
                             </div>
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Nombre de usuario</label>
-                                <input value={state.form.username} onChange={(e) => handleChange('username', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
+                                <input ref={usernameInputRef} value={state.form.username} onChange={(e) => handleChange('username', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
                             </div>
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Correo</label>
-                                <input value={state.form.email} onChange={(e) => handleChange('email', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
+                                <input ref={emailInputRef} value={state.form.email} onChange={(e) => handleChange('email', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
                             </div>
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Número de teléfono</label>
-                                <input value={state.form.phone} onChange={(e) => handleChange('phone', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
+                                <input ref={phoneInputRef} value={state.form.phone} onChange={(e) => handleChange('phone', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
                             </div>
                         </form>
 
                         {passwordModalOpen && (
                             <div onClick={closePasswordModal} className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4'>
-                                <div onClick={(e) => e.stopPropagation()} className='w-full max-w-3xl overflow-hidden rounded-3xl bg-[#E5E5E5] shadow-xl'>
-                                    <div className='bg-blue-300 px-6 py-4'>
-                                        <h2 className='text-left text-5xl font-semibold text-black'>Cambiar contraseña</h2>
+                                <div onClick={(e) => e.stopPropagation()} className='w-[35%] overflow-hidden rounded-xl bg-[#E5E5E5] shadow-xl'>
+                                    <div className='bg-blue-300 px-6 py-2'>
+                                        <h2 className='text-left text-lg font-semibold text-black'>Cambiar contraseña</h2>
                                     </div>
-                                    <div className='px-18 py-12'>
-                                        <div className='mb-10'>
-                                            <label className='mb-3 block text-left text-3xl font-semibold text-black'>Contraseña actual</label>
+                                    <div className='px-18 py-5'>
+                                        <div className='mb-1'>
+                                            <label className='my-1 block text-left text-lg text-black'>Contraseña actual</label>
                                             <div className='relative'>
                                                 <input
                                                     type={showCurrentPassword ? 'text' : 'password'}
                                                     value={currentPassword}
                                                     onChange={(e) => setCurrentPassword(e.target.value)}
-                                                    className='w-full rounded-2xl border-2 border-gray-400 bg-transparent px-5 py-4 pr-16 text-2xl text-black outline-none'
+                                                    className='w-full rounded-lg border-2 border-gray-400 bg-transparent px-4 py-1 pr-16 text-md text-black outline-none'
                                                 />
-                                                <button type='button' onClick={() => setShowCurrentPassword((v) => !v)} className='absolute right-4 top-1/2 -translate-y-1/2 text-3xl text-[#3E1B1B] cursor-pointer'>
+                                                <button type='button' onClick={() => setShowCurrentPassword((v) => !v)} className='absolute right-4 top-1/2 -translate-y-1/3 text-xl text-[#3E1B1B] cursor-pointer'>
                                                     <span className={`fi ${showCurrentPassword ? 'fi-rr-eye' : 'fi-rr-eye-crossed'}`}></span>
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className='mb-10'>
-                                            <label className='mb-3 block text-left text-3xl font-semibold text-black'>Contraseñas nueva</label>
+                                        <div className='mb-1'>
+                                            <label className='my-1 block text-left text-lg text-black'>Contraseña nueva</label>
                                             <div className='relative'>
                                                 <input
                                                     type={showNewPassword ? 'text' : 'password'}
                                                     value={newPassword}
                                                     onChange={(e) => setNewPassword(e.target.value)}
-                                                    className='w-full rounded-2xl border-2 border-gray-400 bg-transparent px-5 py-4 pr-16 text-2xl text-black outline-none'
+                                                    className='w-full rounded-lg border-2 border-gray-400 bg-transparent px-4 py-1 pr-16 text-md text-black outline-none'
                                                 />
-                                                <button type='button' onClick={() => setShowNewPassword((v) => !v)} className='absolute right-4 top-1/2 -translate-y-1/2 text-3xl text-[#3E1B1B] cursor-pointer'>
+                                                <button type='button' onClick={() => setShowNewPassword((v) => !v)} className='absolute right-4 top-1/2 -translate-y-1/3 text-xl text-[#3E1B1B] cursor-pointer'>
                                                     <span className={`fi ${showNewPassword ? 'fi-rr-eye' : 'fi-rr-eye-crossed'}`}></span>
                                                 </button>
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label className='mb-3 block text-left text-3xl font-semibold text-black'>Confirmación de contraseña</label>
+                                            <label className='my-1 block text-left text-lg text-black'>Confirmación de contraseña</label>
                                             <div className='relative'>
                                                 <input
                                                     type={showConfirmPassword ? 'text' : 'password'}
                                                     value={confirmPassword}
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                                    className='w-full rounded-2xl border-2 border-gray-400 bg-transparent px-5 py-4 pr-16 text-2xl text-black outline-none'
+                                                    className='w-full rounded-lg border-2 border-gray-400 bg-transparent px-4 py-1 pr-16 text-md text-black outline-none'
                                                 />
-                                                <button type='button' onClick={() => setShowConfirmPassword((v) => !v)} className='absolute right-4 top-1/2 -translate-y-1/2 text-3xl text-[#3E1B1B] cursor-pointer'>
+                                                <button type='button' onClick={() => setShowConfirmPassword((v) => !v)} className='absolute right-4 top-1/2 -translate-y-1/3 text-xl text-[#3E1B1B] cursor-pointer'>
                                                     <span className={`fi ${showConfirmPassword ? 'fi-rr-eye' : 'fi-rr-eye-crossed'}`}></span>
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className='mt-16 flex items-center justify-between'>
-                                            <button type='button' disabled={passwordLoading} onClick={handlePasswordConfirm} className='min-w-[220px] rounded-2xl bg-gradient-to-r from-blue-400 to-blue-500 px-8 py-3 text-3xl font-semibold text-[#001B57] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed'>
-                                                {passwordLoading ? 'Guardando...' : 'confirmación'}
+                                        <div className='mt-4 flex items-center justify-between'>
+                                            <button type='button' disabled={passwordLoading} onClick={handlePasswordConfirm} className='rounded-lg bg-gradient-to-r from-blue-400 to-blue-500 px-8 py-3 text-lg text-[#001B57] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed'>
+                                                {passwordLoading ? 'Guardando...' : 'Guardar'}
                                             </button>
-                                            <button type='button' onClick={closePasswordModal} className='px-8 py-3 text-4xl font-semibold text-black cursor-pointer'>
+                                            <button type='button' onClick={closePasswordModal} className='text-black cursor-pointer px-8 py-3 text-lg'>
                                                 Cancelar
                                             </button>
                                         </div>

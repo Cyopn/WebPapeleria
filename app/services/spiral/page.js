@@ -659,8 +659,8 @@ export default function SpiralPage() {
                                 <div className='margin-[-50px] bg-transparent'></div>
                             </form>
                             {previewMounted && (
-                                <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
-                                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl max-w-[60vw] w-full p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`} style={{ maxHeight: '80vh' }}>
+                                <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
+                                    <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`} style={{ maxHeight: '80vh' }}>
                                         <div className='flex justify-between items-center'>
                                             <h3 className='text-lg text-black'>Vista previa</h3>
                                         </div>
