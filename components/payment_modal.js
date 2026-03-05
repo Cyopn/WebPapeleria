@@ -145,6 +145,12 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         const p = Math.min(t, Math.max(0, toMoney(printGuess)))
                         return { printPrice: p, specialPrice: toMoney(t - p) }
                     }
+                    const normalizeSpiralType = (value) => {
+                        if (value === 'stapled' || value === 'glued' || value === 'sewn') return value
+                        if (value === 'ep') return 'stapled'
+                        if (value === 'em') return 'glued'
+                        return 'stapled'
+                    }
 
                     if (photoPaper) {
                         for (let i = 0; i < filesToUse.length; i += 1) {
@@ -356,7 +362,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 mode: 'online',
                                 delivery: deliveryDate,
                                 observations: observations || '',
-                                spiral_type: ringType === 'ep' ? 'stapled' : 'glued',
+                                spiral_type: normalizeSpiralType(ringType),
                                 id_print: printProdId,
                                 status: 'pending',
                                 id_user: userId

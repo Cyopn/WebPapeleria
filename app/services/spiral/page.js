@@ -27,7 +27,7 @@ export default function SpiralPage() {
     const [quantity, setQuantity] = useState(1)
     const [paperSize, setPaperSize] = useState('carta')
     const [bothSides, setBothSides] = useState(false)
-    const [ringType, setRingType] = useState('ep')
+    const [ringType, setRingType] = useState('stapled')
     const [priceData, setPriceData] = useState(null)
     const [priceLoading, setPriceLoading] = useState(false)
     const [uploadLoading, setUploadLoading] = useState(false)
@@ -156,7 +156,7 @@ export default function SpiralPage() {
             bothSides: !!bs,
             sets: Number(qty || 1),
             type: 'spiral',
-            ringType: rtype === 'em' ? 'metal' : 'plastic',
+            ringType: rtype === 'ep' ? 'stapled' : rtype === 'em' ? 'glued' : rtype,
         }
 
         try {
@@ -501,8 +501,9 @@ export default function SpiralPage() {
                                         </div>
                                         <div className='w-full flex flex-col items-center content-stretch justify-center'>
                                             <select id='bound' name='bound' value={ringType} onChange={(e) => { const v = e.target.value; setRingType(v); if (uploads.length) calculatePrice(uploads, { ringType: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
-                                                <option value='ep'>Espiral plastico</option>
-                                                <option value='em'>Espiral metalico</option>
+                                                <option value='stapled'>Grapado</option>
+                                                <option value='glued'>Pegado</option>
+                                                <option value='sewn'>Cosido</option>
                                             </select>
                                         </div>
                                         <div className='w-full text-left py-1'>
@@ -609,12 +610,12 @@ export default function SpiralPage() {
                                                 {priceData ? (
                                                     <>
                                                         <label className='w-full py-2 text-sm text-left text-[#3C3C3C] font-bold'>Concepto</label>
-                                                        <div className='text-sm text-left py-1'>{ringType === 'ep' ? 'Espiral plastico' : 'Espiral metalico'}: <strong>{typeof priceData.breakdownPerSet?.ringCost === 'number' ? (`$ ${priceData.breakdownPerSet.ringCost}`) : '—'}</strong></div>
+                                                        <div className='text-sm text-left py-1'>{ringType === 'stapled' ? 'Grapado' : ringType === 'glued' ? 'Pegado' : 'Cosido'}: <strong>{typeof priceData.breakdownPerSet?.ringCost === 'number' ? (`$ ${priceData.breakdownPerSet.ringCost}`) : '—'}</strong></div>
                                                         <div className='text-sm text-left py-1'>Precio por juego: <strong>{typeof priceData.breakdownPerSet.ringCost === 'number' ? (`$ ${priceData.breakdownPerSet.ringCost}`) : '—'}</strong></div>
                                                         <div className='text-sm text-left py-1'>Precio total anillado: <strong>{typeof priceData.breakdownTotal?.ringCost === 'number' ? (`$ ${priceData.breakdownTotal.ringCost}`) : '—'}</strong></div>
                                                     </>
                                                 ) : (
-                                                    <span className='text-sm text-left py-2'>{ringType === 'ep' ? 'Espiral plastico' : 'Espiral metalico'}: <strong>—</strong></span>
+                                                    <span className='text-sm text-left py-2'>{ringType === 'stapled' ? 'Grapado' : ringType === 'glued' ? 'Pegado' : 'Cosido'}: <strong>—</strong></span>
                                                 )}
                                             </div>
                                         </div>
