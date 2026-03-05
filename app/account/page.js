@@ -493,7 +493,7 @@ export default function AccountPage() {
                                 </div>
                             </div>
                             {cropOpen && (
-                                <div onClick={closeCrop} className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/60'>
+                                <div onClick={closeCrop} className='fixed inset-0 z-[70] flex items-center justify-center bg-black/60'>
                                     <div onClick={(e) => e.stopPropagation()} className='bg-white rounded-xl w-[80vw] max-w-3xl p-4'>
                                         <div className='flex justify-between items-center mb-3'>
                                             <h3 className='text-lg font-semibold text-black'>Ajustar imagen</h3>
@@ -547,7 +547,7 @@ export default function AccountPage() {
                         </form>
 
                         {passwordModalOpen && (
-                            <div onClick={closePasswordModal} className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4'>
+                            <div onClick={closePasswordModal} className='fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4'>
                                 <div onClick={(e) => e.stopPropagation()} className='w-[35%] overflow-hidden rounded-xl bg-[#E5E5E5] shadow-xl'>
                                     <div className='bg-blue-300 px-6 py-2'>
                                         <h2 className='text-left text-lg font-semibold text-black'>Cambiar contraseña</h2>

@@ -82,6 +82,29 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
         if (method === 'cash') {
             ; (async () => {
                 try {
+                    const getFileIds = (file) => {
+                        if (!file || typeof file !== 'object') return []
+                        const candidate = [
+                            ...(Array.isArray(file.id_files) ? file.id_files : []),
+                            file.id_file,
+                            file.id,
+                            file.fileId,
+                            file?.file?.id_file,
+                            file?.file?.id,
+                        ]
+                        return [...new Set(candidate.map((v) => Number(v)).filter((v) => Number.isFinite(v) && v > 0))]
+                    }
+
+                    const withFileRefs = (payload, file) => {
+                        const ids = getFileIds(file)
+                        if (ids.length === 0) return payload
+                        return {
+                            ...payload,
+                            id_file: ids[0],
+                            id_files: ids,
+                        }
+                    }
+
                     async function req(path, method = 'GET', body = null) {
                         const headers = { 'Content-Type': 'application/json' }
                         const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null
@@ -112,19 +135,27 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         const totalValue = Number(priceData?.totalPrice || amount || 0)
                         return filesToUse.length ? totalValue / filesToUse.length : totalValue
                     }
+                    const toMoney = (v) => {
+                        const n = Number(v || 0)
+                        if (!Number.isFinite(n) || n <= 0) return 0
+                        return Number(n.toFixed(2))
+                    }
+                    const splitPrices = (total, printGuess) => {
+                        const t = toMoney(total)
+                        const p = Math.min(t, Math.max(0, toMoney(printGuess)))
+                        return { printPrice: p, specialPrice: toMoney(t - p) }
+                    }
 
                     if (photoPaper) {
                         for (let i = 0; i < filesToUse.length; i += 1) {
                             const file = filesToUse[i]
                             const fileName = file?.filename || file?.filehash || null
-                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
                             const perFileTotal = getPerFileTotal(i)
 
-                            const printProdPayload = {
+                            const printProdPayload = withFileRefs({
                                 type: 'print',
                                 description: fileName || 'special_service_photo_print',
                                 price: 0,
-                                id_file: fileId,
                                 filename: fileName || file?.filehash || null,
                                 amount: Number(quantity || 1),
                                 type_print: printType,
@@ -136,15 +167,14 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 observations: '',
                                 status: 'pending',
                                 id_user: userId
-                            }
+                            }, file)
                             const printProdRes = await req('/products', 'POST', printProdPayload)
                             const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
                             if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de fotos')
-                            const specialProdPayload = {
+                            const specialProdPayload = withFileRefs({
                                 type: 'special_service',
                                 description: 'special__service_photo',
                                 price: Number(perFileTotal || 0),
-                                id_file: fileId,
                                 amount: Number(quantity || 1),
                                 service_type: 'photo',
                                 mode: 'online',
@@ -155,22 +185,24 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 id_print: printProdId,
                                 status: 'pending',
                                 id_user: userId
-                            }
+                            }, file)
                             const specialProdRes = await req('/products', 'POST', specialProdPayload)
                             const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
                             if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de fotos')
-                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
+                            const perSet = getBreakdownPerSet(i)
+                            const photoPrintGuess = Number(perSet?.inkCost || 0) + Number(perSet?.photoPaperCost || 0)
+                            const photoSplit = splitPrices(perFileTotal, photoPrintGuess)
+                            details.push({ id_product: printProdId, amount: Number(quantity || 1), price: photoSplit.printPrice })
+                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: photoSplit.specialPrice })
                         }
                     } else if (filesToUse.length && printType && paperSize && !boundType && !docType && !ringType) {
                         for (let i = 0; i < filesToUse.length; i += 1) {
                             const file = filesToUse[i]
-                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
                             const perFileTotal = getPerFileTotal(i)
-                            const printProdPayload = {
+                            const printProdPayload = withFileRefs({
                                 type: 'print',
                                 description: 'Impresión de documentos',
                                 price: Number(perFileTotal || 0),
-                                id_file: fileId,
                                 amount: Number(quantity || 1),
                                 type_print: printType === 'color' ? 'color' : 'bw',
                                 type_paper: 'bond',
@@ -181,7 +213,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 observations: observations || '',
                                 status: 'pending',
                                 id_user: userId
-                            }
+                            }, file)
                             const printProdRes = await req('/products', 'POST', printProdPayload)
                             const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
                             if (!printProdId) throw new Error('No se obtuvo id de producto para impresión')
@@ -191,14 +223,12 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         for (let i = 0; i < filesToUse.length; i += 1) {
                             const file = filesToUse[i]
                             const fileName = file?.filename || file?.filehash || null
-                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
                             const perSet = getBreakdownPerSet(i)
                             const perFileTotal = getPerFileTotal(i)
-                            const printProdPayload = {
+                            const printProdPayload = withFileRefs({
                                 type: 'print',
                                 description: fileName || 'special_service_bounding_print',
                                 price: Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0),
-                                id_file: fileId,
                                 filename: fileName || file?.filehash || null,
                                 amount: Number(quantity || 1),
                                 type_print: printType || 'digital',
@@ -210,12 +240,12 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 observations: '',
                                 status: 'pending',
                                 id_user: userId
-                            }
+                            }, file)
                             const printProdRes = await req('/products', 'POST', printProdPayload)
                             const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
                             if (!printProdId) throw new Error('No se obtuvo id de producto para impresión')
                             const colorMap = { ro: 'red', ve: 'green', az: 'blue', am: 'yellow' }
-                            const specialProdPayload = {
+                            const specialProdPayload = withFileRefs({
                                 type: 'special_service',
                                 description: 'special_service_bounding',
                                 price: Number(perSet?.bindingCost || 0) + Number(perSet?.coverCost || 0),
@@ -229,13 +259,16 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 spiral_type: boundType === 'ep' ? 'plastic' : 'wire',
                                 id_print: printProdId,
                                 status: 'pending',
-                                id_file: fileId,
                                 id_user: userId
-                            }
+                            }, file)
                             const specialProdRes = await req('/products', 'POST', specialProdPayload)
                             const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
                             if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial')
-                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
+                            const boundPrintPrice = Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0)
+                            const boundSpecialPrice = Number(perSet?.bindingCost || 0) + Number(perSet?.coverCost || 0)
+                            const boundSplit = splitPrices(perFileTotal, boundPrintPrice)
+                            details.push({ id_product: printProdId, amount: Number(quantity || 1), price: boundPrintPrice > 0 ? toMoney(boundPrintPrice) : boundSplit.printPrice })
+                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: boundSpecialPrice > 0 ? toMoney(boundSpecialPrice) : boundSplit.specialPrice })
                         }
                     } else if (docType) {
                         const mapDoc = {
@@ -247,13 +280,11 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                         for (let i = 0; i < filesToUse.length; i += 1) {
                             const file = filesToUse[i]
                             const fileName = file?.filename || file?.filehash || null
-                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
                             const perFileTotal = getPerFileTotal(i)
-                            const printProdPayload = {
+                            const printProdPayload = withFileRefs({
                                 type: 'print',
                                 description: fileName || 'special_service_docs_print',
                                 price: 0,
-                                id_file: fileId,
                                 filename: fileName || file?.filehash || null,
                                 amount: Number(quantity || 1),
                                 type_print: printType || 'digital',
@@ -265,42 +296,43 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 observations: '',
                                 status: 'pending',
                                 id_user: userId
-                            }
+                            }, file)
                             const printProdRes = await req('/products', 'POST', printProdPayload)
                             const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
                             if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de documentos')
-                            const specialProdPayload = {
+                            const specialProdPayload = withFileRefs({
                                 type: 'special_service',
                                 description: 'special_service_docs',
                                 price: Number(perFileTotal || 0),
                                 service_type: 'doc_esp',
                                 mode: 'online',
                                 delivery: deliveryDate,
-                                id_file: fileId,
                                 observations: observations || '',
                                 document_type: mapDoc[docType] || 'otro',
                                 binding_type: bindingType,
                                 id_print: printProdId,
                                 status: 'pending',
                                 id_user: userId
-                            }
+                            }, file)
                             const specialProdRes = await req('/products', 'POST', specialProdPayload)
                             const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
                             if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de documentos')
-                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
+                            const perSet = getBreakdownPerSet(i)
+                            const docsPrintGuess = Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0)
+                            const docsSplit = splitPrices(perFileTotal, docsPrintGuess)
+                            details.push({ id_product: printProdId, amount: Number(quantity || 1), price: docsSplit.printPrice })
+                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: docsSplit.specialPrice })
                         }
                     } else if (ringType) {
                         for (let i = 0; i < filesToUse.length; i += 1) {
                             const file = filesToUse[i]
                             const fileName = file?.filename || file?.filehash || null
-                            const fileId = file?.id_file ?? file?.id ?? file?.fileId ?? null
                             const perSet = getBreakdownPerSet(i)
                             const perFileTotal = getPerFileTotal(i)
-                            const printProdPayload = {
+                            const printProdPayload = withFileRefs({
                                 type: 'print',
                                 description: fileName || 'special_service_spiral_print',
                                 price: Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0),
-                                id_file: fileId,
                                 filename: fileName || file?.filehash || null,
                                 amount: Number(quantity || 1),
                                 type_print: printType || 'digital',
@@ -312,11 +344,11 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 observations: '',
                                 status: 'pending',
                                 id_user: userId
-                            }
+                            }, file)
                             const printProdRes = await req('/products', 'POST', printProdPayload)
                             const printProdId = printProdRes?.id_item ?? printProdRes?.id_product ?? printProdRes?.id ?? null
                             if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de anillado')
-                            const specialProdPayload = {
+                            const specialProdPayload = withFileRefs({
                                 type: 'special_service',
                                 description: 'Anillado de documentos',
                                 price: Number(perSet?.ringCost || 0),
@@ -327,15 +359,18 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 spiral_type: ringType === 'ep' ? 'stapled' : 'glued',
                                 id_print: printProdId,
                                 status: 'pending',
-                                id_file: fileId,
                                 id_user: userId
-                            }
+                            }, file)
                             const specialProdRes = await req('/products', 'POST', specialProdPayload)
                             const specialProdId = specialProdRes?.id_item ?? specialProdRes?.id_product ?? specialProdRes?.id ?? null
                             if (!specialProdId) throw new Error('No se obtuvo id de producto para servicio especial de anillado')
-                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: Number(perFileTotal || 0) })
+                            const ringPrintPrice = Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0)
+                            const ringSpecialPrice = Number(perSet?.ringCost || 0)
+                            const ringSplit = splitPrices(perFileTotal, ringPrintPrice)
+                            details.push({ id_product: printProdId, amount: Number(quantity || 1), price: ringPrintPrice > 0 ? toMoney(ringPrintPrice) : ringSplit.printPrice })
+                            details.push({ id_product: specialProdId, amount: Number(quantity || 1), price: ringSpecialPrice > 0 ? toMoney(ringSpecialPrice) : ringSplit.specialPrice })
                         }
-                    } else if (cartItems.length > 0) {
+                    } else if (Array.isArray(cartItems) && cartItems.length > 0) {
                         for (const it of cartItems) {
                             details.push({ id_product: it.id, amount: Number(it.qty || 1), price: Number(it.price || 0) })
                         }
@@ -394,7 +429,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
     return (
         <div
             onClick={handleClose}
-            className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${visible ? 'opacity-100' : 'opacity-0'}`}>
+            className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${visible ? 'opacity-100' : 'opacity-0'}`}>
             <div
                 onClick={(e) => e.stopPropagation()}
                 className={`bg-white rounded-xl w-[60%] mx-6 pb-6 transform transition-all flex flex-col items-center duration-${ANIM_DURATION} ${visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>

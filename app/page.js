@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <section className='text-center'>
       <div className='relative top-0 w-full h-[75vh] flex justify-center items-center'>
-        <div className='absolute left-0 w-[52%] h-full bg-black/85 z-[2] items-center content-center flex justify-center'>
+        <div className='absolute left-0 w-[52%] h-full bg-black/85 z-[1] items-center content-center flex justify-center'>
           <div className='flex gap-[20px] items-center content-center justify-center flex-nowrap flex-col h-full w-[80%]'>
             <h1 className='text-5xl font-bold text-white pt-10'>Imprime tu mundo con color, creatividad y calidad</h1>
             <h3 className='text-4xl font-bold text-white pt-10'>Papelería con propósito</h3>
@@ -21,7 +21,7 @@ export default function HomePage() {
         <Image
           src='/images/bg-index.png'
           alt='bg'
-          className='absolute w-full h-full object-cover z-[1]'
+          className='absolute w-full h-full object-cover z-[0]'
           width={1639}
           height={929}
           loading='eager' />

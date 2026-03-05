@@ -88,10 +88,10 @@ export default function Navbar() {
           'productos': '/products',
           'servicios especiales': '/services',
           'fotografía': '/services/photo',
-          'ingresar': '/signin', 'iniciar sesion': '/signin', 'login': '/signin',
+          'ingresar': '/signin', 'iniciar sesión': '/signin', 'iniciar sesion': '/signin', 'login': '/signin',
           'registrarse': '/signup',
-          'anillado e impresíon': '/services/spiral',
-          'encuadernado e impresíon': '/services/bound',
+          'anillado e impresión': '/services/spiral',
+          'encuadernado e impresión': '/services/bound',
           'documentos especiales': '/services/docs',
         }
         const normalizedQuery = normalize(q)
@@ -116,7 +116,7 @@ export default function Navbar() {
   if (routes.includes(pathname)) {
     return (
       <>
-        <nav className='absolute top-0 w-full z-[2] bg-gradient-to-r from-[#0872EAA3] to-[#5B6FD79E]'>
+        <nav className='absolute top-0 w-full z-[40] bg-gradient-to-r from-[#0872EAA3] to-[#5B6FD79E]'>
           <div className='py-7 flex gap-0 flex-row flex-nowrap justify-evenly items-center content-center text-lg'>
             <Link href='/' className='flex gap-2 items-center content-center hover:text-yellow-300 transition'>
               <Image
@@ -144,10 +144,10 @@ export default function Navbar() {
                   'productos': '/products',
                   'servicios especiales': '/services',
                   'fotografía': '/services/photo',
-                  'ingresar': '/signin', 'iniciar sesion': '/signin', 'login': '/signin',
+                  'ingresar': '/signin', 'iniciar sesión': '/signin', 'iniciar sesion': '/signin', 'login': '/signin',
                   'registrarse': '/signup',
-                  'anillado e impresíon': '/services/spiral',
-                  'encuadernado e impresíon': '/services/bound',
+                  'anillado e impresión': '/services/spiral',
+                  'encuadernado e impresión': '/services/bound',
                   'documentos especiales': '/services/docs',
                 }
                 if (routeMap[slug]) {
@@ -176,7 +176,7 @@ export default function Navbar() {
                   <Search />
                 </button>
                 {showSuggestions && (suggestions.length > 0 || loadingSuggestions || noResults) && (
-                  <div className='absolute left-0 right-0 mt-2 z-50'>
+                  <div className='absolute left-0 right-0 mt-2 z-[50]'>
                     <ul className='bg-white rounded-xl shadow-lg max-h-64 overflow-auto text-left'>
                       {loadingSuggestions && <li className='p-2 text-sm text-gray-800'>Cargando...</li>}
                       {noResults && !loadingSuggestions && <li className='p-2 text-sm text-gray-800'>No se encontraron resultados</li>}
@@ -230,7 +230,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className='absolute top-0 w-full z-[2]'>
+      <nav className='absolute top-0 w-full z-[40]'>
         <div className='py-7 flex gap-0 flex-row flex-nowrap justify-evenly items-center content-center text-lg'>
           <Link href='/' className='flex gap-2 items-center content-center hover:text-yellow-300 transition'>
             <Image
@@ -258,10 +258,10 @@ export default function Navbar() {
                 'productos': '/products',
                 'servicios especiales': '/services',
                 'fotografía': '/services/photo',
-                'ingresar': '/signin', 'iniciar sesion': '/signin', 'login': '/signin',
+                'ingresar': '/signin', 'iniciar sesión': '/signin', 'iniciar sesion': '/signin', 'login': '/signin',
                 'registrarse': '/signup',
-                'anillado e impresíon': '/services/spiral',
-                'encuadernado e impresíon': '/services/bound',
+                'anillado e impresión': '/services/spiral',
+                'encuadernado e impresión': '/services/bound',
                 'documentos especiales': '/services/docs',
               }
               if (routeMap[slug]) {
@@ -290,7 +290,7 @@ export default function Navbar() {
                 <Search />
               </button>
               {showSuggestions && (suggestions.length > 0 || loadingSuggestions || noResults) && (
-                <div className='absolute left-0 right-0 mt-2 z-50'>
+                <div className='absolute left-0 right-0 mt-2 z-[50]'>
                   <ul className='bg-white rounded-xl shadow-lg max-h-64 overflow-auto text-left'>
                     {loadingSuggestions && <li className='p-2 text-sm text-gray-800'>Cargando...</li>}
                     {noResults && !loadingSuggestions && <li className='p-2 text-sm text-gray-800'>No se encontraron resultados</li>}

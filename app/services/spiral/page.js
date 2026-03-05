@@ -253,9 +253,16 @@ export default function SpiralPage() {
                 }
 
                 const final = await res2.json().catch(() => null)
-                const items = Array.isArray(final?.items) ? final.items : []
-                const savedList = items.length > 0
-                    ? items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+                const normalizedFromFinal = (() => {
+                    if (!final) return []
+                    if (Array.isArray(final?.items)) {
+                        return final.items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+                    }
+                    const single = final?.file || final?.data?.file || final?.data || final?.payload || final
+                    return single ? [single] : []
+                })()
+                const savedList = normalizedFromFinal.length > 0
+                    ? normalizedFromFinal
                     : (Array.isArray(responseList) ? responseList.map((r) => ({
                         filename: r.originalName,
                         type: r.service,
@@ -461,7 +468,7 @@ export default function SpiralPage() {
                                                 <label htmlFor='br3' className='w-full h-full  text-left pl-2'>Todas</label>
                                             </div>
                                             <div className='w-full text-left'>
-                                                <span className='pr-3'>Paginas</span>
+                                                <span className='pr-3'>Páginas</span>
                                                 <input
                                                     type='text'
                                                     id='rangep'
@@ -659,7 +666,7 @@ export default function SpiralPage() {
                                 <div className='margin-[-50px] bg-transparent'></div>
                             </form>
                             {previewMounted && (
-                                <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
+                                <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
                                     <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`} style={{ maxHeight: '80vh' }}>
                                         <div className='flex justify-between items-center'>
                                             <h3 className='text-lg text-black'>Vista previa</h3>

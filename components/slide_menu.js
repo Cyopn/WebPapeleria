@@ -121,7 +121,7 @@ export default function SlideMenu({ open, onClose }) {
     }
     return (
         <div
-            className={`fixed inset-0 z-[100] transition-all duration-300 ${open ? 'visible' : 'invisible'
+            className={`fixed inset-0 z-[60] transition-all duration-300 ${open ? 'visible' : 'invisible'
                 }`}
         >
             <div

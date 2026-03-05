@@ -348,9 +348,16 @@ export default function PhotoPage() {
             }
 
             const final = await reg.json().catch(() => null)
-            const items = Array.isArray(final?.items) ? final.items : []
-            const savedList = items.length > 0
-                ? items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+            const normalizedFromFinal = (() => {
+                if (!final) return []
+                if (Array.isArray(final?.items)) {
+                    return final.items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+                }
+                const single = final?.file || final?.data?.file || final?.data || final?.payload || final
+                return single ? [single] : []
+            })()
+            const savedList = normalizedFromFinal.length > 0
+                ? normalizedFromFinal
                 : (Array.isArray(responseList) ? responseList.map((r) => ({
                     filename: r.originalName,
                     type: r.service,
@@ -452,9 +459,16 @@ export default function PhotoPage() {
             }
 
             const final = await reg.json().catch(() => null)
-            const items = Array.isArray(final?.items) ? final.items : []
-            const savedList = items.length > 0
-                ? items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+            const normalizedFromFinal = (() => {
+                if (!final) return []
+                if (Array.isArray(final?.items)) {
+                    return final.items.map((item) => item?.data?.file || item?.data || item?.payload).filter(Boolean)
+                }
+                const single = final?.file || final?.data?.file || final?.data || final?.payload || final
+                return single ? [single] : []
+            })()
+            const savedList = normalizedFromFinal.length > 0
+                ? normalizedFromFinal
                 : (Array.isArray(responseList) ? responseList.map((r) => ({
                     filename: r.originalName,
                     type: r.service,
@@ -672,7 +686,7 @@ export default function PhotoPage() {
                         <div className='absolute flex flex-col items-center top-[23%] w-[85%]'>
                             <form className='flex flex-col items-center w-full bg-white rounded-xl p-6 shadow-lg inset-shadow-sm inset-shadow-gray-500'>
                                 <div className='flex flex-col items-center justify-center w-full text-black'>
-                                    <div className='font-bold text-4xl pb-5 italic'>Impresion de Fotografia</div>
+                                    <div className='font-bold text-4xl pb-5 italic'>Impresión de Fotografía</div>
                                     <div className='p-2'>
                                         <div className='relative h-[150px]'>
                                             {localPreview ? (
@@ -734,16 +748,16 @@ export default function PhotoPage() {
                                 <div className='w-[80%] p-2 text-black grid grid-cols-[repeat(3,1fr)] grid-rows-[1fr] gap-y-[10px]'>
                                     <div className='w-full p-2'>
                                         <div className='w-full text-left py-1'>
-                                            <span>Tipo de impresion</span>
+                                            <span>Tipo de impresión</span>
                                         </div>
                                         <div className='w-full flex gap-[24px] flex-col justify-between'>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
                                                 <input id='br1' type='radio' value='blanco_negro' name='br' className='w-5 h-5' checked={printType === 'blanco_negro'} onChange={() => { setPrintType('blanco_negro'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (lastUpload) calculatePrice(lastUpload, { printType: 'blanco_negro' }) }} />
-                                                <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresion Blanco y Negro</label>
+                                                <label htmlFor='br1' className='w-full py-2 text-left pl-4'>Impresión Blanco y Negro</label>
                                             </div>
                                             <div className='flex items-center ps-4 w-full rounded-xl border border-gray-400 mb-2'>
                                                 <input id='br2' type='radio' value='color' name='br' className='w-5 h-5' checked={printType === 'color'} onChange={() => { setPrintType('color'); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf(), 600) } else if (lastUpload) calculatePrice(lastUpload, { printType: 'color' }) }} />
-                                                <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresion a Color</label>
+                                                <label htmlFor='br2' className='w-full py-2 text-left pl-4'>Impresión a Color</label>
                                             </div>
                                         </div>
                                         <div className='w-full text-left py-1'>
@@ -753,7 +767,7 @@ export default function PhotoPage() {
                                             <select id='paper' name='paper' value={paperSize} onChange={(e) => { const v = e.target.value; setPaperSize(v); if (localPreview) { if (genTimeoutRef.current) clearTimeout(genTimeoutRef.current); genTimeoutRef.current = setTimeout(() => createAndStorePdf({ paperSize: v }), 600) } else if (lastUpload) calculatePrice(lastUpload, { paperSize: v }) }} className='w-full border rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 bg-[#D9D9D9] border-gray-600 placeholder-gray-400 text-black focus:ring-blue-500 focus:border-blue-500'>
                                                 <option value='ti'>Tamaño infantil (2.5x3cm)</option>
                                                 <option value='tc'>Tamaño carnet (4x4cm)</option>
-                                                <option value='tap'>Tamaño album pequeño (9x13cm)</option>
+                                                <option value='tap'>Tamaño álbum pequeño (9x13cm)</option>
                                             </select>
                                         </div>
                                         <div className='w-full text-left py-1'>
@@ -855,7 +869,7 @@ export default function PhotoPage() {
                                     </div>
                                     <div className='w-full p-2'>
                                         <div className='w-full text-left'>
-                                            <span>Precios de fotografia</span>
+                                            <span>Precios de fotografía</span>
                                         </div>
                                         <div className='bg-[#BABABA47] w-full rounded-lg'>
                                             <div className='w-full flex flex-col content-stretch p-1 pl-3'>
@@ -881,7 +895,7 @@ export default function PhotoPage() {
                                                     <>
                                                         <span className='text-sm text-left py-2'>Tamaño infantil: <label id='til'></label></span>
                                                         <span className='text-sm text-left py-2'>Tamaño carnet: <label id='tcl'></label></span>
-                                                        <span className='text-sm text-left py-2'>Tamaño album pequeño: <label id='tapl'></label></span>
+                                                        <span className='text-sm text-left py-2'>Tamaño álbum pequeño: <label id='tapl'></label></span>
                                                     </>
                                                 )}
                                             </div>
@@ -912,7 +926,7 @@ export default function PhotoPage() {
                                 <div className='margin-[-50px] bg-transparent'></div>
                             </form>
                             {previewMounted && (
-                                <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-[50] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
+                                <div onClick={() => setPreviewOpen(false)} className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/50 transition-opacity duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100' : 'opacity-0'}`}>
                                     <div onClick={(e) => e.stopPropagation()} className={`bg-white rounded-xl w-[60vw] p-6 overflow-auto transform transition-all duration-${ANIM_DURATION} ${previewVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}>
                                         <div className='flex justify-between items-center'>
                                             <h3 className='text-lg text-black font-semibold'>Vista previa</h3>
@@ -994,7 +1008,7 @@ export default function PhotoPage() {
                             )}
 
                             {cropOpen && (
-                                <div onClick={closeCrop} className={`fixed inset-0 z-[9999] flex items-center justify-center bg-black/60`}>
+                                <div onClick={closeCrop} className={`fixed inset-0 z-[70] flex items-center justify-center bg-black/60`}>
                                     <div onClick={(e) => e.stopPropagation()} className='bg-white rounded-xl w-[80vw] max-w-3xl p-4'>
                                         <div className='flex justify-between items-center mb-3'>
                                             <h3 className='text-lg font-semibold text-black'>Recortar imagen</h3>
