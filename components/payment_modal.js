@@ -19,6 +19,9 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
     const { lastUpload, uploads, printType, paperSize, rangeValue, bothSides, quantity, priceData, cartItems, total, item, deliveryDate, pastaType, boundType, coverColor, observations, photoPaper, docType, bindingType, ringType } = context || {}
     const effectiveCartItems = currentCartItems.length > 0 ? currentCartItems : (item ? [item] : [])
     const displayAmount = effectiveCartItems.length > 0 ? effectiveCartItems.reduce((s, it) => s + (Number(it.price) || 0) * (it.qty || 1), 0) : (context.total || amount)
+    const IVA_RATE = 0.16
+    const displayIva = Number((Number(displayAmount || 0) * IVA_RATE).toFixed(2))
+    const displayImporte = Number((Number(displayAmount || 0) + displayIva).toFixed(2))
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -160,7 +163,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
 
                             const printProdPayload = withFileRefs({
                                 type: 'print',
-                                description: fileName || 'special_service_photo_print',
+                                description: 'Servicio especial',
                                 price: 0,
                                 filename: fileName || file?.filehash || null,
                                 amount: Number(quantity || 1),
@@ -179,7 +182,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de fotos')
                             const specialProdPayload = withFileRefs({
                                 type: 'special_service',
-                                description: 'special__service_photo',
+                                description: 'Servicio especial',
                                 price: Number(perFileTotal || 0),
                                 amount: Number(quantity || 1),
                                 service_type: 'photo',
@@ -233,7 +236,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             const perFileTotal = getPerFileTotal(i)
                             const printProdPayload = withFileRefs({
                                 type: 'print',
-                                description: fileName || 'special_service_bounding_print',
+                                description: 'Servicio especial',
                                 price: Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0),
                                 filename: fileName || file?.filehash || null,
                                 amount: Number(quantity || 1),
@@ -253,7 +256,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             const colorMap = { ro: 'red', ve: 'green', az: 'blue', am: 'yellow' }
                             const specialProdPayload = withFileRefs({
                                 type: 'special_service',
-                                description: 'special_service_bounding',
+                                description: 'Servicio especial',
                                 price: Number(perSet?.bindingCost || 0) + Number(perSet?.coverCost || 0),
                                 amount: Number(quantity || 1),
                                 service_type: 'enc_imp',
@@ -289,7 +292,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             const perFileTotal = getPerFileTotal(i)
                             const printProdPayload = withFileRefs({
                                 type: 'print',
-                                description: fileName || 'special_service_docs_print',
+                                description: 'Servicio especial',
                                 price: 0,
                                 filename: fileName || file?.filehash || null,
                                 amount: Number(quantity || 1),
@@ -308,7 +311,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de documentos')
                             const specialProdPayload = withFileRefs({
                                 type: 'special_service',
-                                description: 'special_service_docs',
+                                description: 'Servicio especial',
                                 price: Number(perFileTotal || 0),
                                 service_type: 'doc_esp',
                                 mode: 'online',
@@ -337,7 +340,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             const perFileTotal = getPerFileTotal(i)
                             const printProdPayload = withFileRefs({
                                 type: 'print',
-                                description: fileName || 'special_service_spiral_print',
+                                description: 'Servicio especial',
                                 price: Number(perSet?.inkCost || 0) + Number(perSet?.paperCost || 0),
                                 filename: fileName || file?.filehash || null,
                                 amount: Number(quantity || 1),
@@ -356,7 +359,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             if (!printProdId) throw new Error('No se obtuvo id de producto para impresión de anillado')
                             const specialProdPayload = withFileRefs({
                                 type: 'special_service',
-                                description: 'Anillado de documentos',
+                                description: 'Servicio especial',
                                 price: Number(perSet?.ringCost || 0),
                                 service_type: 'ani_imp',
                                 mode: 'online',
@@ -443,6 +446,8 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                     <h3 className='text-xl font-semibold text-black py-2'>Gestión de pago</h3>
                 </div>
                 <p className='mt-2 text-lg text-gray-600'>Total: <span className='font-medium'>$ {displayAmount} {currency}</span></p>
+                <p className='text-xs text-gray-400'>Iva: <span className='font-medium'>$ {displayIva} {currency}</span></p>
+                <p className='text-xs text-gray-400'>Importe: <span className='font-medium'>$ {displayImporte} {currency}</span></p>
                 <div className='w-[80%] mt-4 text-black'>
                     <div className='flex gap-2 flex justify-between py-2 text-md'>
                         <button

@@ -16,7 +16,7 @@ export default function Navbar() {
   const { user } = useAuth();
   const { openPayment } = usePayment();
   const currentUserId = user?.user?.id_user ?? user?.user?.id ?? user?.id_user ?? user?.id ?? null
-  const routes = ['/prints', '/services', '/products', '/services/photo', '/account'];
+  const routes = ['/prints', '/services', '/products', '/services/photo', '/account', '/transactions', '/transactions/pending', '/notifications'];
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(() => getCount())
   const [cartOpen, setCartOpen] = useState(false)

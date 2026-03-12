@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 export default function SignInPage() {
   const [username, setUser] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const { showToast } = useToast()
   function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { console.error('[SigninPage] showToast fallo', e) } }
@@ -88,7 +89,15 @@ export default function SignInPage() {
                     <span className='fi fi-sr-lock'></span>
                   </span>
                 </div>
-                <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={password} onChange={e => setPassword(e.target.value)} placeholder='Contraseña' type='password' required />
+                <input className='block py-2 w-full p-2.5 pr-10 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={password} onChange={e => setPassword(e.target.value)} placeholder='Contraseña' type={showPassword ? 'text' : 'password'} required />
+                <button
+                  type='button'
+                  onClick={() => setShowPassword((v) => !v)}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-xl text-gray-700 cursor-pointer'
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                >
+                  <span className={`fi ${showPassword ? 'fi-rr-eye' : 'fi-rr-eye-crossed'}`}></span>
+                </button>
               </div>
               <div className='py-10'>
                 <button type='submit' disabled={loading}

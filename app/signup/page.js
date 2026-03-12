@@ -12,6 +12,8 @@ export default function SignUpPage() {
     const [phone, setPhone] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const { showToast } = useToast()
     function showError(msg) { try { showToast(msg, { type: 'error' }) } catch (e) { console.error('[SignupPage] showToast fallo', e) } }
@@ -142,7 +144,15 @@ export default function SignUpPage() {
                                         <span className='fi fi-sr-lock'></span>
                                     </span>
                                 </div>
-                                <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={password} onChange={e => setPassword(e.target.value)} placeholder='Contraseña' type='password' required />
+                                <input className='block py-2 w-full p-2.5 pr-10 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={password} onChange={e => setPassword(e.target.value)} placeholder='Contraseña' type={showPassword ? 'text' : 'password'} required />
+                                <button
+                                    type='button'
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    className='absolute right-3 top-1/2 -translate-y-1/2 text-xl text-gray-700 cursor-pointer'
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                >
+                                    <span className={`fi ${showPassword ? 'fi-rr-eye' : 'fi-rr-eye-crossed'}`}></span>
+                                </button>
                             </div>
                             <div className='relative w-[45%] py-5'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
@@ -150,7 +160,15 @@ export default function SignUpPage() {
                                         <span className='fi fi-sr-lock'></span>
                                     </span>
                                 </div>
-                                <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder='Confirmar contraseña' type='password' required />
+                                <input className='block py-2 w-full p-2.5 pr-10 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder='Confirmar contraseña' type={showConfirmPassword ? 'text' : 'password'} required />
+                                <button
+                                    type='button'
+                                    onClick={() => setShowConfirmPassword((v) => !v)}
+                                    className='absolute right-3 top-1/2 -translate-y-1/2 text-xl text-gray-700 cursor-pointer'
+                                    aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                >
+                                    <span className={`fi ${showConfirmPassword ? 'fi-rr-eye' : 'fi-rr-eye-crossed'}`}></span>
+                                </button>
                             </div>
                             <div className='pt-5 pb-10'>
                                 <button type='submit' disabled={loading}

@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
         if (storedUser) {
             setUser(JSON.parse(storedUser))
         } else {
-            setUser({ id: 1 })
+            setUser({ id_user: 1 })
         }
         setReady(true)
     }, [])

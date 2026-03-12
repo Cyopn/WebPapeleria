@@ -6,7 +6,7 @@ import { useToast } from '@/context/toast_context'
 
 export default function AccountPage() {
     const { showToast, dismissToast } = useToast()
-    const defaultForm = { name: '', username: '', email: '', phone: '', avatar: '' }
+    const defaultForm = { name: '', lastName: '', username: '', email: '', phone: '', avatar: '' }
     const [passwordModalOpen, setPasswordModalOpen] = useState(false)
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
@@ -27,6 +27,7 @@ export default function AccountPage() {
                 userId: id,
                 form: {
                     name: u.names || u.nombre || '',
+                    lastName: u.lastnames || u.lastName || u.lastname || '',
                     username: u.username || '',
                     email: u.email || u.correo || '',
                     phone: u.phone || u.telefono || u.phone || '',
@@ -42,6 +43,7 @@ export default function AccountPage() {
     const avatarInputRef = useRef(null)
     const avatarObjectUrlRef = useRef(null)
     const nameInputRef = useRef(null)
+    const lastNameInputRef = useRef(null)
     const usernameInputRef = useRef(null)
     const emailInputRef = useRef(null)
     const phoneInputRef = useRef(null)
@@ -62,6 +64,7 @@ export default function AccountPage() {
             const u = parsed?.user || parsed || {}
             return {
                 name: u.names || u.nombre || '',
+                lastName: u.lastnames || u.lastName || u.lastname || '',
                 username: u.username || '',
                 email: u.email || u.correo || '',
                 phone: u.phone || u.telefono || u.phone || '',
@@ -95,7 +98,7 @@ export default function AccountPage() {
     }
 
     function isSameForm(a, b) {
-        return a.name === b.name && a.username === b.username && a.email === b.email && a.phone === b.phone && a.avatar === b.avatar
+        return a.name === b.name && a.lastName === b.lastName && a.username === b.username && a.email === b.email && a.phone === b.phone && a.avatar === b.avatar
     }
 
     function handleChange(field, value) {
@@ -373,6 +376,7 @@ export default function AccountPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     names: (nameInputRef.current?.value ?? state.form.name),
+                    lastnames: (lastNameInputRef.current?.value ?? state.form.lastName),
                     username: (usernameInputRef.current?.value ?? state.form.username),
                     email: (emailInputRef.current?.value ?? state.form.email),
                     phone: (phoneInputRef.current?.value ?? state.form.phone),
@@ -390,18 +394,19 @@ export default function AccountPage() {
                     const parsed = JSON.parse(raw)
                     const u = parsed?.user || parsed || {}
                     const newNames = nameInputRef.current?.value ?? state.form.name
+                    const newLastName = lastNameInputRef.current?.value ?? state.form.lastName
                     const newUsername = usernameInputRef.current?.value ?? state.form.username
                     const newEmail = emailInputRef.current?.value ?? state.form.email
                     const newPhone = phoneInputRef.current?.value ?? state.form.phone
-                    const merged = { ...u, names: newNames, username: newUsername, email: newEmail, phone: newPhone, avatar: avatarValue }
+                    const merged = { ...u, names: newNames, lastnames: newLastName, username: newUsername, email: newEmail, phone: newPhone, avatar: avatarValue }
                     const toStore = parsed?.user ? { ...parsed, user: merged } : merged
                     localStorage.setItem('user', JSON.stringify(toStore))
                 }
             } catch (e) {
                 console.error('[AccountPage] error updating localStorage', e)
             }
-            setState((s) => ({ ...s, form: { ...s.form, name: (nameInputRef.current?.value ?? s.form.name), username: (usernameInputRef.current?.value ?? s.form.username), email: (emailInputRef.current?.value ?? s.form.email), phone: (phoneInputRef.current?.value ?? s.form.phone), avatar: avatarValue } }))
-            setOriginalForm((prev) => ({ ...prev, name: (nameInputRef.current?.value ?? prev.name), username: (usernameInputRef.current?.value ?? prev.username), email: (emailInputRef.current?.value ?? prev.email), phone: (phoneInputRef.current?.value ?? prev.phone), avatar: avatarValue }))
+            setState((s) => ({ ...s, form: { ...s.form, name: (nameInputRef.current?.value ?? s.form.name), lastName: (lastNameInputRef.current?.value ?? s.form.lastName), username: (usernameInputRef.current?.value ?? s.form.username), email: (emailInputRef.current?.value ?? s.form.email), phone: (phoneInputRef.current?.value ?? s.form.phone), avatar: avatarValue } }))
+            setOriginalForm((prev) => ({ ...prev, name: (nameInputRef.current?.value ?? prev.name), lastName: (lastNameInputRef.current?.value ?? prev.lastName), username: (usernameInputRef.current?.value ?? prev.username), email: (emailInputRef.current?.value ?? prev.email), phone: (phoneInputRef.current?.value ?? prev.phone), avatar: avatarValue }))
             if (avatarObjectUrlRef.current) {
                 try { URL.revokeObjectURL(avatarObjectUrlRef.current) } catch (e) { }
                 avatarObjectUrlRef.current = null
@@ -531,6 +536,10 @@ export default function AccountPage() {
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Nombre</label>
                                 <input ref={nameInputRef} value={state.form.name} onChange={(e) => handleChange('name', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
+                            </div>
+                            <div className='w-[85%] py-1 text-gray-500 py-3'>
+                                <label>Apellido</label>
+                                <input ref={lastNameInputRef} value={state.form.lastName} onChange={(e) => handleChange('lastName', e.target.value)} className='block w-full p-2 rounded-full bg-gray-100 text-center' />
                             </div>
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Nombre de usuario</label>

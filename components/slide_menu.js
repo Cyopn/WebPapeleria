@@ -54,7 +54,9 @@ export default function SlideMenu({ open, onClose }) {
             const parsed = JSON.parse(raw)
             const u = parsed?.user || parsed || {}
             return {
+                id: parsed?.user?.id_user ?? parsed?.user?.id ?? parsed?.id_user ?? parsed?.id ?? u?.id_user ?? u?.id ?? null,
                 name: u.names || u.nombre || '',
+                lastName: u.lastnames || u.apellidos || '',
                 username: u.username || '',
                 email: u.email || u.correo || '',
                 phone: u.phone || u.telefono || u.phone || '',
@@ -155,11 +157,16 @@ export default function SlideMenu({ open, onClose }) {
                                 height={300}
                                 loading='eager' />
                         </div>
-                        <div className='w-full flex justify-center items-center text-black py-2'>
-                            <span className='text-lg'>{userData.name || 'Nombre'}</span>
+                        <div className='w-full text-black text-center py-2'>
+                            <div className='w-full flex justify-center items-center text-black'>
+                                <span className='text-lg'>{userData.username || 'Nombre'}</span>
+                            </div>
+                            <div className='w-full flex justify-center items-center text-black'>
+                                <span className='text-md'>{"Numero de cliente: " + userData.id || 'Identificador'}</span>
+                            </div>
                         </div>
                         <div className='w-full flex justify-center items-center text-black text-center py-2'>
-                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opción no disponible') }} className='relative w-[45%] py-5 cursor-pointer'>
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); onClose && onClose(); router.push('/transactions/pending') }} className='relative w-[45%] py-5 cursor-pointer'>
                                 <div className='flex justify-center items-center'>
                                     <span className='text-3xl'>
                                         <span className='fi fi-rr-shopping-cart-check'></span>
@@ -167,7 +174,7 @@ export default function SlideMenu({ open, onClose }) {
                                 </div>
                                 <label className='cursor-pointer'>Mis pedidos</label>
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('opción no disponible') }} className='relative w-[45%] py-5 cursor-pointer'>
+                            <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); onClose && onClose(); router.push('/notifications') }} className='relative w-[45%] py-5 cursor-pointer'>
                                 <div className='flex justify-center items-center'>
                                     <span className='text-3xl'>
                                         <span className='fi fi-rr-cowbell'></span>
@@ -179,7 +186,7 @@ export default function SlideMenu({ open, onClose }) {
                         <div className='w-full flex flex-col justify-center items-center text-left py-2'>
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Nombre</label>
-                                <input value={userData.name} readOnly className='block w-full p-2 w-full rounded-full bg-gray-200 text-center' />
+                                <input value={(userData.name + " " + userData.lastName) || 'Nombre'} readOnly className='block w-full p-2 w-full rounded-full bg-gray-200 text-center' />
                             </div>
                             <div className='w-[85%] py-1 text-gray-500 py-3'>
                                 <label>Correo</label>
@@ -209,7 +216,7 @@ export default function SlideMenu({ open, onClose }) {
                                 </a>
                             </div>
                             <div className='w-full py-3'>
-                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); showToast('Opción no disponible') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
+                                <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); onClose && onClose(); router.push('/transactions') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
                                     <div className='pl-10 w-auto'>
                                         <span className='text-xl px-2 h-full text-black'>
                                             <span className='fi fi-br-document'></span>
