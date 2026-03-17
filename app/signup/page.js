@@ -95,10 +95,10 @@ export default function SignUpPage() {
                 </div>
                 <div className=' flex pt-[100px] flex-row justify-end items-center content-center absolute top-0 z-[3] w-full h-full'>
                     <div className='flex flex-col bg-white w-[30%] rounded-4xl text-black inset-shadow-sm inset-shadow-gray-500 shadow-xl/20'>
-                        <h1 className='text-4xl pt-10 pb-5'>Registrate</h1>
+                        <h1 className='text-4xl pt-5 pb-2'>Registrate</h1>
                         <span className='fi fi-sr-user text-6xl py-2'></span>
                         <form onSubmit={handleSubmit} className='flex flex-col items-center justify-center w-full text-black'>
-                            <div className='relative w-[45%] py-5'>
+                            <div className='relative w-[45%] py-2'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
                                     <span className='items-center px-3 text-sm w-4 h-4'>
                                         <span className='fi fi-sr-user'></span>
@@ -106,7 +106,7 @@ export default function SignUpPage() {
                                 </div>
                                 <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={firstName} onChange={e => setFirstName(e.target.value)} placeholder='Nombre' required />
                             </div>
-                            <div className='relative w-[45%] py-5'>
+                            <div className='relative w-[45%] py-2'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
                                     <span className='items-center px-3 text-sm w-4 h-4'>
                                         <span className='fi fi-sr-user'></span>
@@ -114,7 +114,7 @@ export default function SignUpPage() {
                                 </div>
                                 <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={lastName} onChange={e => setLastName(e.target.value)} placeholder='Apellidos' required />
                             </div>
-                            <div className='relative w-[45%] py-5'>
+                            <div className='relative w-[45%] py-2'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
                                     <span className='items-center px-3 text-sm w-4 h-4'>
                                         <span className='fi fi-sr-user'></span>
@@ -122,7 +122,7 @@ export default function SignUpPage() {
                                 </div>
                                 <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={username} onChange={e => setUsername(e.target.value)} placeholder='Usuario' required />
                             </div>
-                            <div className='relative w-[45%] py-5'>
+                            <div className='relative w-[45%] py-2'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
                                     <span className='items-center px-3 text-sm w-4 h-4'>
                                         <span className='fi fi-sr-at'></span>
@@ -130,7 +130,7 @@ export default function SignUpPage() {
                                 </div>
                                 <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={email} onChange={e => setEmail(e.target.value)} placeholder='Correo' type='email' required />
                             </div>
-                            <div className='relative w-[45%] py-5'>
+                            <div className='relative w-[45%] py-2'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
                                     <span className='items-center px-3 text-sm w-4 h-4'>
                                         <span className='fi fi-sr-phone-flip'></span>
@@ -138,13 +138,13 @@ export default function SignUpPage() {
                                 </div>
                                 <input className='block py-2 w-full p-2.5 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={phone} onChange={e => setPhone(e.target.value)} placeholder='Teléfono' type='tel' />
                             </div>
-                            <div className='relative w-[45%] py-5'>
+                            <div className='relative w-[45%] py-2'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
                                     <span className='items-center px-3 text-sm w-4 h-4'>
                                         <span className='fi fi-sr-lock'></span>
                                     </span>
                                 </div>
-                                <input className='block py-2 w-full p-2.5 pr-10 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={password} onChange={e => setPassword(e.target.value)} placeholder='Contraseña' type={showPassword ? 'text' : 'password'} required />
+                                <input className='block py-2 w-full p-2 pr-10 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={password} onChange={e => setPassword(e.target.value)} placeholder='Contraseña' type={showPassword ? 'text' : 'password'} required />
                                 <button
                                     type='button'
                                     onClick={() => setShowPassword((v) => !v)}
@@ -154,13 +154,13 @@ export default function SignUpPage() {
                                     <span className={`fi ${showPassword ? 'fi-rr-eye' : 'fi-rr-eye-crossed'}`}></span>
                                 </button>
                             </div>
-                            <div className='relative w-[45%] py-5'>
+                            <div className='relative w-[45%] py-2'>
                                 <div className='absolute inset-y-0 start-0 flex items-center pointer-events-none'>
                                     <span className='items-center px-3 text-sm w-4 h-4'>
                                         <span className='fi fi-sr-lock'></span>
                                     </span>
                                 </div>
-                                <input className='block py-2 w-full p-2.5 pr-10 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder='Confirmar contraseña' type={showConfirmPassword ? 'text' : 'password'} required />
+                                <input className='block py-2 w-full pr-10 w-full z-20 text-gray-700 rounded-full bg-gray-200/80 text-center' value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder='Confirmar contraseña' type={showConfirmPassword ? 'text' : 'password'} required />
                                 <button
                                     type='button'
                                     onClick={() => setShowConfirmPassword((v) => !v)}
@@ -170,7 +170,7 @@ export default function SignUpPage() {
                                     <span className={`fi ${showConfirmPassword ? 'fi-rr-eye' : 'fi-rr-eye-crossed'}`}></span>
                                 </button>
                             </div>
-                            <div className='pt-5 pb-10'>
+                            <div className='pt-2 pb-5'>
                                 <button type='submit' disabled={loading}
                                     className='text-black text-xl px-5 p-3 rounded-xl bg-gradient-to-r from-[#FFE417] to-[#FDBD4A] cursor-pointer disabled:opacity-50'
                                 >
