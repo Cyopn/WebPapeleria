@@ -21,7 +21,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
     const displayAmount = effectiveCartItems.length > 0 ? effectiveCartItems.reduce((s, it) => s + (Number(it.price) || 0) * (it.qty || 1), 0) : (context.total || amount)
     const IVA_RATE = 0.16
     const displayIva = Number((Number(displayAmount || 0) * IVA_RATE).toFixed(2))
-    const displayImporte = Number((Number(displayAmount || 0) + displayIva).toFixed(2))
+    const displayImporte = Number((Number(displayAmount || 0) - displayIva).toFixed(2))
 
     function lockBody() {
         if (typeof window === 'undefined') return
@@ -446,8 +446,8 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                     <h3 className='text-xl font-semibold text-black py-2'>Gestión de pago</h3>
                 </div>
                 <p className='mt-2 text-lg text-gray-600'>Total: <span className='font-medium'>$ {displayAmount} {currency}</span></p>
+                <p className='text-xs text-gray-400'>Subtotal: <span className='font-medium'>$ {displayImporte} {currency}</span></p>
                 <p className='text-xs text-gray-400'>Iva: <span className='font-medium'>$ {displayIva} {currency}</span></p>
-                <p className='text-xs text-gray-400'>Importe: <span className='font-medium'>$ {displayImporte} {currency}</span></p>
                 <div className='w-[80%] mt-4 text-black'>
                     <div className='flex gap-2 flex justify-between py-2 text-md'>
                         <button

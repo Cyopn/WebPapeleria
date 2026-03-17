@@ -117,7 +117,7 @@ export default function ProductCard({ id, name, description, price, image }) {
                         <span className='text-xl'>${price}</span>
                     </div>
                     <div className='flex gap-1 m-1 px-2 w-full justify-evenly'>
-                        <button onClick={handleBuyNow} className='w-[48%] bg-gradient-to-r to-[#006DEC] from-[#7AD0EC] text-black py-2 px-2 rounded-xl cursor-pointer text-sm'>Comprar ahora</button>
+                        <button onClick={handleCardClick} className='w-[48%] bg-gradient-to-r to-[#006DEC] from-[#7AD0EC] text-black py-2 px-2 rounded-xl cursor-pointer text-sm'>Comprar ahora</button>
                         <button onClick={handleAddToCart} type='button' className='w-[48%] bg-[#77ADFFBD] text-[#012588] py-2 px-2 rounded-xl cursor-pointer text-sm'>Agregar al carrito</button>
                     </div>
                 </div>
