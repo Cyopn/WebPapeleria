@@ -486,7 +486,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                             <p>Los pedidos se prepararán una vez que se confirme el pago.</p>
                         </div>
                     )}
-                    <div className='mt-4'>
+                    <div className='mt-4 space-y-2'>
                         {qrCode ? (
                             <button
                                 onClick={handleClose}
@@ -498,6 +498,12 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                                 disabled={loading}
                                 className='w-full bg-gradient-to-r from-[#7AD0EC] to-[#006DEC] text-black py-3 rounded-xl cursor-pointer'
                             >{loading ? 'Procesando...' : 'Pagar'}</button>
+                        )}
+                        {!qrCode && (
+                            <button
+                                onClick={handleClose}
+                                className='w-full border border-gray-300 text-gray-700 py-3 rounded-xl cursor-pointer hover:bg-gray-50'
+                            >Cerrar</button>
                         )}
                     </div>
                 </div>
