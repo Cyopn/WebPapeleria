@@ -1,6 +1,6 @@
 'use client'
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { clear as clearCart } from '@/lib/cart_store'
 import { useToast } from '@/context/toast_context'
@@ -28,6 +28,30 @@ export default function SlideMenu({ open, onClose }) {
         return `/api/file-manager/download/avatar/${encodeURIComponent(val)}`
     }
 
+    function getInitialUserData() {
+        if (typeof window === 'undefined') return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' };
+        try {
+            const raw = localStorage.getItem('user');
+            if (!raw) return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' };
+            const parsed = JSON.parse(raw);
+            const u = parsed?.user || parsed || {};
+            return {
+                id: parsed?.user?.id_user ?? parsed?.user?.id ?? parsed?.id_user ?? parsed?.id ?? u?.id_user ?? u?.id ?? null,
+                name: u.names || u.nombre || '',
+                lastName: u.lastnames || u.apellidos || '',
+                username: u.username || '',
+                email: u.email || u.correo || '',
+                phone: u.phone || u.telefono || u.phone || '',
+                avatar: u.avatar || u.photo || u.profileImageUrl || '/images/no-image.png',
+                role: u.role || parsed?.role || '',
+                roles: u.roles || parsed?.roles || [],
+            };
+        } catch (err) {
+            console.error('[SlideMenu] Error al parsear usuario desde localStorage', err);
+            return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' };
+        }
+    }
+
     function lockBody() {
         if (typeof window === 'undefined') return
         if (lockRef.current) return
@@ -46,27 +70,19 @@ export default function SlideMenu({ open, onClose }) {
 
     const router = useRouter()
     const { showToast } = useToast()
-    const [userData, setUserData] = useState(() => {
-        if (typeof window === 'undefined') return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' }
-        try {
-            const raw = localStorage.getItem('user')
-            if (!raw) return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' }
-            const parsed = JSON.parse(raw)
-            const u = parsed?.user || parsed || {}
-            return {
-                id: parsed?.user?.id_user ?? parsed?.user?.id ?? parsed?.id_user ?? parsed?.id ?? u?.id_user ?? u?.id ?? null,
-                name: u.names || u.nombre || '',
-                lastName: u.lastnames || u.apellidos || '',
-                username: u.username || '',
-                email: u.email || u.correo || '',
-                phone: u.phone || u.telefono || u.phone || '',
-                avatar: u.avatar || u.photo || u.profileImageUrl || '/images/no-image.png'
-            }
-        } catch (err) {
-            console.error('[SlideMenu] Error al parsear usuario desde localStorage', err)
-            return { name: '', username: '', email: '', phone: '', avatar: '/images/no-image.png' }
+    const [userData, setUserData] = useState(getInitialUserData);
+
+    const canAccessDashboard = useMemo(() => {
+        if (!userData) return false;
+        const allowed = ['admin', 'manager', 'supervisor', 'employee'];
+        if (typeof userData.role === 'string') {
+            return allowed.includes(userData.role.toLowerCase());
         }
-    })
+        if (Array.isArray(userData.roles)) {
+            return userData.roles.some(r => allowed.includes((r || '').toLowerCase()));
+        }
+        return false;
+    }, [userData]);
 
     useEffect(() => {
         if (open) {
@@ -198,6 +214,33 @@ export default function SlideMenu({ open, onClose }) {
                             </div>
                         </div>
                         <div onClick={(e) => { e.preventDefault(); showToast('Opción no disponible') }} className='w-full flex flex-col justify-center items-center text-left py-2'>
+                            {canAccessDashboard && (
+                                <div className='w-full py-3'>
+                                    <a
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            onClose && onClose();
+                                            router.push('/dashboard');
+                                        }}
+                                        className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full rounded transition'
+                                    >
+                                        <div className='pl-10 w-auto'>
+                                            <span className='text-xl px-2 h-full'>
+                                                <span className='fi fi-rr-stats'></span>
+                                            </span>
+                                        </div>
+                                        <div className='w-full text-left'>
+                                            <span className='pl-5'>Dashboard</span>
+                                        </div>
+                                        <div className='pr-10 w-auto'>
+                                            <span className='flex items-center text-xl px-2'>
+                                                <span className='fi fi-br-exit'></span>
+                                            </span>
+                                        </div>
+                                    </a>
+                                </div>
+                            )}
                             <div className='w-full py-3'>
                                 <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); onClose && onClose(); router.push('/account') }} className='text-black text-bold text-center p-3 cursor-pointer flex flex-row justify-between w-full'>
                                     <div className='pl-10 w-auto'>

@@ -75,7 +75,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
     function handleClose() {
         onClose && onClose()
         if (qrCode) {
-            setTimeout(() => { try { window.location.reload() } catch (e) { /* ignore */ } }, 300)
+            setTimeout(() => { try { window.location.reload() } catch (e) { } }, 300)
         }
     }
 
@@ -411,7 +411,7 @@ export default function PaymentModal({ open, onClose, amount = 0, currency = 'MX
                     } else {
                         onPay && onPay({ method: 'cash', amount, transactionId: trxId })
                         onClose && onClose()
-                        setTimeout(() => { try { window.location.reload() } catch (e) { /* ignore */ } }, 300)
+                        setTimeout(() => { try { window.location.reload() } catch (e) { } }, 300)
                     }
                     if (currentCartItems.length > 0) {
                         clear()

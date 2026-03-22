@@ -43,7 +43,6 @@ export default function ProductCard({ id, name, description, price, image }) {
                     setOpen(true)
                 }
             } catch (err) {
-                // ignore
             }
         }
 

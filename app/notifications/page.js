@@ -82,7 +82,6 @@ export default function NotificationsPage() {
         try {
             const idTx = n?.metadata?.id_transaction || n?.metadata?.id_transaction || null
             const notifId = n?.id_notification || n?.id || null
-            // marcar notificación como leída en el servidor
             if (notifId) {
                 try {
                     const raw = localStorage.getItem('user')
@@ -98,7 +97,6 @@ export default function NotificationsPage() {
                         }
                     }).catch(() => { })
                 } catch (e) {
-                    // ignore
                 }
             }
             if (!idTx) {

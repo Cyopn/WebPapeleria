@@ -637,7 +637,6 @@ export default function PhotoPage() {
     return (
         <section className='text-center'>
             <style jsx>{`
-                /* Use :global so styled-jsx doesn't scope pseudo-element selectors */
                 :global(input.no-spin::-webkit-outer-spin-button),
                 :global(input.no-spin::-webkit-inner-spin-button) {
                     -webkit-appearance: none;
@@ -648,7 +647,6 @@ export default function PhotoPage() {
                     -webkit-appearance: none;
                     appearance: textfield;
                 }
-                /* also cover explicit type selector for broader compatibility */
                 :global(input[type='number'].no-spin)::-webkit-outer-spin-button,
                 :global(input[type='number'].no-spin)::-webkit-inner-spin-button {
                     -webkit-appearance: none;
